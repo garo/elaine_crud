@@ -1,0 +1,60 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold text-gray-900"><%= @model_name.pluralize %></h1>
+    <%= link_to "New #{@model_name}", 
+        url_for(action: :new), 
+        class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" %>
+  </div>
+
+  <% if @records.any? %>
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <% @columns.each do |column| %>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <%# TODO: Add sorting functionality - make headers clickable %>
+                <%= field_title(column.to_sym) %>
+              </th>
+            <% end %>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Actions
+            </th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <% @records.each do |record| %>
+            <tr class="hover:bg-gray-50">
+              <% @columns.each do |column| %>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <%# TODO: Implement search/filter functionality for this column %>
+                  <%= display_field_value(record, column.to_sym) %>
+                </td>
+              <% end %>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <div class="flex space-x-2">
+                  <%= link_to "Edit", 
+                      url_for(action: :edit, id: record.id), 
+                      class: "text-green-600 hover:text-green-900" %>
+                  <%= link_to "Delete", 
+                      url_for(action: :destroy, id: record.id), 
+                      method: :delete,
+                      data: { confirm: "Are you sure?" },
+                      class: "text-red-600 hover:text-red-900" %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
+      <h3 class="text-lg font-medium text-gray-900 mb-2">No <%= @model_name.pluralize.downcase %> found</h3>
+      <p class="text-gray-600 mb-4">Get started by creating your first <%= @model_name.downcase %>.</p>
+      <%= link_to "Create #{@model_name}", 
+          url_for(action: :new), 
+          class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" %>
+    </div>
+  <% end %>
+</div>

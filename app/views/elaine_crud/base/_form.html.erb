@@ -1,0 +1,51 @@
+<%# Shared form partial for new and edit views %>
+<% form_url = record.persisted? ? url_for(action: :update, id: record.id) : url_for(action: :create) %>
+<%= form_with model: record, url: form_url, local: true, class: "space-y-6" do |form| %>
+  <%# Display validation errors if any %>
+  <% if record.errors.any? %>
+    <div class="bg-red-50 border border-red-200 rounded-md p-4">
+      <h3 class="text-sm font-medium text-red-800">
+        <%= pluralize(record.errors.count, "error") %> prohibited this <%= model_name.downcase %> from being saved:
+      </h3>
+      <ul class="mt-2 text-sm text-red-700">
+        <% record.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <%# TODO: Render fields using field configuration system %>
+  <%# This should iterate through configured fields and permitted params %>
+  <%# Should handle readonly fields, options, foreign keys, custom edit callbacks %>
+  <%# Should include field descriptions as help text %>
+  <div class="space-y-4">
+    <% permitted_attributes.each do |field_name| %>
+      <div class="form-group">
+        <label for="<%= "#{record.class.name.underscore}_#{field_name}" %>" 
+               class="block text-sm font-medium text-gray-700 mb-1">
+          <%= field_title(field_name) %>
+          <% if field_readonly?(field_name) %>
+            <span class="text-xs text-gray-500">(read-only)</span>
+          <% end %>
+        </label>
+        
+        <%= render_form_field(form, record, field_name) %>
+        
+        <% if field_description(field_name).present? %>
+          <p class="text-xs text-gray-500 mt-1">
+            <%= field_description(field_name) %>
+          </p>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="flex justify-end space-x-3">
+    <%= link_to "Cancel", 
+        url_for(action: :index), 
+        class: "bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded" %>
+    <%= form.submit submit_text, 
+        class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" %>
+  </div>
+<% end %>
