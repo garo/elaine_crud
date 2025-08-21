@@ -54,6 +54,10 @@ module ElaineCrud
       @model_name = crud_model.name
       @columns = determine_columns
       
+      # Handle inline editing mode
+      @edit_record_id = params[:edit].to_i if params[:edit].present?
+      @editing_record = @edit_record_id ? find_record_by_id(@edit_record_id) : nil
+      
       render 'elaine_crud/base/index'
     end
     
@@ -92,10 +96,25 @@ module ElaineCrud
       @record = find_record
       
       if @record.update(record_params)
-        redirect_to polymorphic_path(@record), notice: "#{crud_model.name} was successfully updated."
+        # Check if we're updating from inline edit mode
+        if params[:from_inline_edit]
+          redirect_to url_for(action: :index), notice: "#{crud_model.name} was successfully updated."
+        else
+          redirect_to polymorphic_path(@record), notice: "#{crud_model.name} was successfully updated."
+        end
       else
-        @model_name = crud_model.name
-        render 'elaine_crud/base/edit', status: :unprocessable_entity
+        # Handle validation errors in inline edit mode
+        if params[:from_inline_edit]
+          @records = fetch_records
+          @model_name = crud_model.name
+          @columns = determine_columns
+          @edit_record_id = @record.id
+          @editing_record = @record
+          render 'elaine_crud/base/index', status: :unprocessable_entity
+        else
+          @model_name = crud_model.name
+          render 'elaine_crud/base/edit', status: :unprocessable_entity
+        end
       end
     end
     
@@ -200,6 +219,13 @@ module ElaineCrud
     # Find a single record by ID
     def find_record
       crud_model.find(params[:id])
+    end
+    
+    # Find a record by a specific ID (used for inline editing)
+    def find_record_by_id(id)
+      crud_model.find(id)
+    rescue ActiveRecord::RecordNotFound
+      nil
     end
     
     # Strong parameters

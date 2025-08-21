@@ -24,26 +24,32 @@
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
           <% @records.each do |record| %>
-            <tr class="hover:bg-gray-50">
-              <% @columns.each do |column| %>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  <%# TODO: Implement search/filter functionality for this column %>
-                  <%= display_field_value(record, column.to_sym) %>
+            <% if @editing_record && @editing_record.id == record.id %>
+              <%# Render inline edit form for this record %>
+              <%= render 'elaine_crud/base/edit_row', record: @editing_record %>
+            <% else %>
+              <%# Render normal view row %>
+              <tr class="hover:bg-gray-50">
+                <% @columns.each do |column| %>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <%# TODO: Implement search/filter functionality for this column %>
+                    <%= display_field_value(record, column.to_sym) %>
+                  </td>
+                <% end %>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <div class="flex space-x-2">
+                    <%= link_to "Edit", 
+                        url_for(action: :index, edit: record.id), 
+                        class: "text-green-600 hover:text-green-900" %>
+                    <%= link_to "Delete", 
+                        url_for(action: :destroy, id: record.id), 
+                        method: :delete,
+                        data: { confirm: "Are you sure?" },
+                        class: "text-red-600 hover:text-red-900" %>
+                  </div>
                 </td>
-              <% end %>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                <div class="flex space-x-2">
-                  <%= link_to "Edit", 
-                      url_for(action: :edit, id: record.id), 
-                      class: "text-green-600 hover:text-green-900" %>
-                  <%= link_to "Delete", 
-                      url_for(action: :destroy, id: record.id), 
-                      method: :delete,
-                      data: { confirm: "Are you sure?" },
-                      class: "text-red-600 hover:text-red-900" %>
-                </div>
-              </td>
-            </tr>
+              </tr>
+            <% end %>
           <% end %>
         </tbody>
       </table>

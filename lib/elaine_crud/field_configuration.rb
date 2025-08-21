@@ -111,17 +111,38 @@ module ElaineCrud
 
     # Method to execute edit callback  
     def render_edit_field(record, controller_instance, form_builder = nil)
-      # TODO: Implement edit field rendering with callback support
-      # 1. Handle different input types based on configuration:
-      #    - If has_options?: render select dropdown
-      #    - If has_foreign_key?: render foreign key dropdown
-      #    - If @edit_callback: use custom callback (Symbol method or Proc)
-      #    - Else: default field type based on ActiveRecord column type
-      # 2. If @edit_callback is Symbol, call controller_instance.public_send(@edit_callback, field_value, record, form_builder)
-      # 3. If @edit_callback is Proc, call it with appropriate parameters
-      # 4. Should return HTML-safe form field string
-      # 5. Include field description as help text if present
-      return "<!-- TODO: Edit field for #{@field_name} -->"
+      field_value = record.public_send(@field_name)
+      
+      case @edit_callback
+      when Symbol
+        # Call method on controller instance
+        if controller_instance.respond_to?(@edit_callback, true)
+          result = controller_instance.send(@edit_callback, field_value, record, form_builder)
+        else
+          raise NoMethodError, "Edit callback method '#{@edit_callback}' not found on #{controller_instance.class.name}"
+        end
+      when Proc
+        # Call proc with field value, record, and form builder
+        result = @edit_callback.call(field_value, record, form_builder)
+      else
+        raise ArgumentError, "Edit callback must be a Symbol or Proc, got #{@edit_callback.class.name}"
+      end
+      
+      # Ensure result is HTML safe
+      result.respond_to?(:html_safe) ? result.html_safe : result.to_s.html_safe
+    rescue => e
+      # Graceful error handling - show the error in development but fallback in production
+      if Rails.env.development?
+        controller_instance.content_tag(:span, "Error: #{e.message}", class: "text-red-500 text-xs")
+      else
+        # Fallback to basic text field
+        if form_builder
+          field_class = "block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+          form_builder.text_field(@field_name, class: field_class)
+        else
+          field_value.to_s.html_safe
+        end
+      end
     end
 
     # Method to get foreign key options for dropdowns
