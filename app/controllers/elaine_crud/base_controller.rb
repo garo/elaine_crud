@@ -270,18 +270,25 @@ module ElaineCrud
     end
     
     # Determine which columns to display
-    # TODO: Integrate with field configuration system to respect show_in_index? settings
     def determine_columns
-      # Get all potential columns
-      all_columns = crud_model.column_names.reject { |col| col == 'id' || col.end_with?('_at') }
+      # Get all potential columns (including id now)
+      all_columns = crud_model.column_names
       
-      # TODO: Filter based on field configurations
-      # 1. If field_configurations present, check each field's show_in_index? method
-      # 2. Respect any visibility settings in field configurations
-      # 3. Maybe allow ordering of columns based on configuration order
-      
-      # For now, return all non-id/timestamp columns (existing behavior)
-      all_columns
+      # Filter columns based on field configurations and new visibility rules
+      all_columns.select do |col|
+        field_config = field_config_for(col.to_sym)
+        
+        if field_config&.visible == false
+          # Explicitly hidden via field configuration
+          false
+        elsif field_config&.visible == true
+          # Explicitly shown via field configuration (even if it ends with '_at')
+          true
+        else
+          # Default behavior: hide columns ending with '_at', show everything else
+          !col.end_with?('_at')
+        end
+      end
     end
     
     # Apply default values to a new record based on field configurations
