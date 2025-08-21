@@ -1,12 +1,50 @@
 <div class="container mx-auto px-4 py-8">
   <div class="flex justify-between items-center mb-6">
-    <h1 class="text-3xl font-bold text-gray-900">Edit <%= @model_name %></h1>
+    <h1 class="text-3xl font-bold text-gray-900">Edit <%= @model_name %> (ID: <%= @record.id %>)</h1>
     <%= link_to "Back to #{@model_name.pluralize}", 
         url_for(action: :index), 
         class: "text-gray-600 hover:text-gray-900" %>
   </div>
 
-  <div class="bg-white shadow-md rounded-lg p-6">
-    <%= render 'form', record: @record, submit_text: "Update #{@model_name}" %>
-  </div>
+  <% if @records.any? %>
+    <%# Calculate the maximum number of grid columns needed based on field spans %>
+    <% total_columns = @columns.sum { |column| field_grid_column_span(column.to_sym) } + 1 %>
+    
+    <div class="bg-white shadow-md overflow-hidden border border-gray-300">
+      <%# Header row with table-like styling %>
+      <div class="grid border-b-2 border-gray-300 bg-gray-100" style="grid-template-columns: repeat(<%= total_columns %>, minmax(0, 1fr));">
+        <% @columns.each do |column| %>
+          <div class="px-3 py-3 text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-200 last:border-r-0 <%= field_grid_classes(column.to_sym) %>">
+            <%= field_title(column.to_sym) %>
+          </div>
+        <% end %>
+        <div class="px-3 py-3 text-xs font-medium text-gray-700 uppercase tracking-wider">
+          Actions
+        </div>
+      </div>
+
+      <%# Records grid with table-like styling %>
+      <% @records.each_with_index do |record, index| %>
+        <% record_id = "record_#{record.id}" %>
+        <% row_bg_class = index.even? ? "bg-white" : "bg-gray-50" %>
+        <div class="record border-b border-gray-200 last:border-b-0 <%= row_bg_class %> hover:bg-blue-50" id="<%= record_id %>">
+          <% if record.id == @record.id %>
+            <%# Render edit row for the record being edited %>
+            <%= render 'elaine_crud/base/edit_row', record: @record, columns: @columns %>
+          <% else %>
+            <%# Render normal view row %>
+            <%= render 'elaine_crud/base/view_row', record: record, columns: @columns, total_columns: total_columns %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
+      <h3 class="text-lg font-medium text-gray-900 mb-2">No <%= @model_name.pluralize.downcase %> found</h3>
+      <p class="text-gray-600 mb-4">Get started by creating your first <%= @model_name.downcase %>.</p>
+      <%= link_to "Create #{@model_name}", 
+          url_for(action: :new), 
+          class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" %>
+    </div>
+  <% end %>
 </div>

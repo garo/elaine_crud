@@ -86,33 +86,64 @@ module ElaineCrud
     
     def edit
       @record = find_record
+      @records = fetch_records  # Fetch all records for the edit page
       @model_name = crud_model.name
-      render 'elaine_crud/base/edit'
+      @columns = determine_columns
+      
+      # For Turbo Frame requests, return just the edit row partial
+      if turbo_frame_request?
+        render partial: 'elaine_crud/base/edit_row', locals: { record: @record, columns: @columns }
+      else
+        # For direct access, render the full edit page showing all records with this one in edit mode
+        render 'elaine_crud/base/edit'
+      end
     end
     
     def update
       @record = find_record
+      @model_name = crud_model.name
+      @columns = determine_columns
       
       if @record.update(record_params)
-        # Check if we're updating from inline edit mode
-        if params[:from_inline_edit]
+        # For Turbo Frame requests, return the view row partial
+        if turbo_frame_request?
+          total_columns = @columns.sum { |column| field_config_for(column.to_sym)&.grid_column_span || 1 } + 1
+          render partial: 'elaine_crud/base/view_row', locals: { record: @record, columns: @columns, total_columns: total_columns }
+        elsif params[:from_inline_edit]
+          # Legacy inline edit mode (will be deprecated)
           redirect_to url_for(action: :index), notice: "#{crud_model.name} was successfully updated."
         else
           redirect_to polymorphic_path(@record), notice: "#{crud_model.name} was successfully updated."
         end
       else
-        # Handle validation errors in inline edit mode
-        if params[:from_inline_edit]
+        # Handle validation errors
+        if turbo_frame_request?
+          # Return edit row partial with errors
+          render partial: 'elaine_crud/base/edit_row', locals: { record: @record, columns: @columns }, status: :unprocessable_entity
+        elsif params[:from_inline_edit]
+          # Legacy inline edit mode (will be deprecated)
           @records = fetch_records
-          @model_name = crud_model.name
-          @columns = determine_columns
           @edit_record_id = @record.id
           @editing_record = @record
           render 'elaine_crud/base/index', status: :unprocessable_entity
         else
-          @model_name = crud_model.name
           render 'elaine_crud/base/edit', status: :unprocessable_entity
         end
+      end
+    end
+    
+    def cancel_edit
+      @record = find_record
+      @model_name = crud_model.name
+      @columns = determine_columns
+      
+      # For Turbo Frame requests, return just the view row partial
+      if turbo_frame_request?
+        total_columns = @columns.sum { |column| field_config_for(column.to_sym)&.grid_column_span || 1 } + 1
+        render partial: 'elaine_crud/base/view_row', locals: { record: @record, columns: @columns, total_columns: total_columns }
+      else
+        # For direct access, redirect to index
+        redirect_to url_for(action: :index)
       end
     end
     
@@ -207,6 +238,11 @@ module ElaineCrud
     end
     
     private
+    
+    # Check if the request is coming from a Turbo Frame
+    def turbo_frame_request?
+      request.headers['Turbo-Frame'].present?
+    end
     
     # Fetch all records for index view
     # Can be overridden in subclasses for custom filtering/scoping

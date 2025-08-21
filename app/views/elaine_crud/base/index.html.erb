@@ -31,29 +31,10 @@
         <div class="record border-b border-gray-200 last:border-b-0 <%= row_bg_class %> hover:bg-blue-50" id="<%= record_id %>">
           <% if @editing_record && @editing_record.id == record.id %>
             <%# Render inline edit form for this record %>
-            <%= render 'elaine_crud/base/edit_row', record: @editing_record %>
+            <%= render 'elaine_crud/base/edit_row', record: @editing_record, columns: @columns %>
           <% else %>
-            <%# Render normal view row as grid %>
-            <div class="grid" style="grid-template-columns: repeat(<%= total_columns %>, minmax(0, 1fr));">
-              <% @columns.each do |column| %>
-                <div class="px-3 py-3 text-sm text-gray-900 border-r border-gray-200 last:border-r-0 <%= field_grid_classes(column.to_sym) %>">
-                  <%# TODO: Implement search/filter functionality for this column %>
-                  <%= display_field_value(record, column.to_sym) %>
-                </div>
-              <% end %>
-              <div class="px-3 py-3 text-sm text-gray-500">
-                <div class="flex space-x-2">
-                  <%= link_to "Edit", 
-                      url_for(action: :index, edit: record.id), 
-                      class: "text-green-600 hover:text-green-900" %>
-                  <%= link_to "Delete", 
-                      url_for(action: :destroy, id: record.id), 
-                      method: :delete,
-                      data: { confirm: "Are you sure?" },
-                      class: "text-red-600 hover:text-red-900" %>
-                </div>
-              </div>
-            </div>
+            <%# Render normal view row %>
+            <%= render 'elaine_crud/base/view_row', record: record, columns: @columns, total_columns: total_columns %>
           <% end %>
         </div>
       <% end %>

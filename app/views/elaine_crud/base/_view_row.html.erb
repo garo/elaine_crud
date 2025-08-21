@@ -1,0 +1,24 @@
+<%# View mode row wrapped in turbo-frame for seamless inline editing %>
+<turbo-frame id="record_<%= record.id %>">
+  <%# Normal view row as grid - needs columns and total_columns variables from parent %>
+  <div class="grid" style="grid-template-columns: repeat(<%= total_columns %>, minmax(0, 1fr));">
+    <% columns.each do |column| %>
+      <div class="px-3 py-3 text-sm text-gray-900 border-r border-gray-200 last:border-r-0 <%= field_grid_classes(column.to_sym) %>">
+        <%# TODO: Implement search/filter functionality for this column %>
+        <%= display_field_value(record, column.to_sym) %>
+      </div>
+    <% end %>
+    <div class="px-3 py-3 text-sm text-gray-500">
+      <div class="flex space-x-2">
+        <%= link_to "Edit", 
+            url_for(action: :edit, id: record.id), 
+            class: "text-green-600 hover:text-green-900" %>
+        <%= link_to "Delete", 
+            url_for(action: :destroy, id: record.id), 
+            method: :delete,
+            data: { confirm: "Are you sure?" },
+            class: "text-red-600 hover:text-red-900" %>
+      </div>
+    </div>
+  </div>
+</turbo-frame>
