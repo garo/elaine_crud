@@ -114,6 +114,34 @@ module ElaineCrud
       controller.field_description(field_name)
     end
 
+    # Get CSS Grid column span for a field
+    # @param field_name [Symbol] The field name
+    # @return [Integer] The column span (default 1)
+    def field_grid_column_span(field_name)
+      controller.field_config_for(field_name)&.grid_column_span || 1
+    end
+
+    # Get CSS Grid row span for a field
+    # @param field_name [Symbol] The field name
+    # @return [Integer] The row span (default 1)
+    def field_grid_row_span(field_name)
+      controller.field_config_for(field_name)&.grid_row_span || 1
+    end
+
+    # Generate CSS Grid classes for a field
+    # @param field_name [Symbol] The field name
+    # @return [String] CSS classes for grid positioning
+    def field_grid_classes(field_name)
+      column_span = field_grid_column_span(field_name)
+      row_span = field_grid_row_span(field_name)
+      
+      classes = []
+      classes << "col-span-#{column_span}" if column_span > 1
+      classes << "row-span-#{row_span}" if row_span > 1
+      
+      classes.join(' ')
+    end
+
     # Render form field using field configuration system
     # @param form [ActionView::Helpers::FormBuilder] The form builder
     # @param record [ActiveRecord::Base] The record being edited
@@ -125,7 +153,7 @@ module ElaineCrud
       # If field is readonly, show the display value instead of an input
       if field_readonly?(field_name)
         content_tag(:div, display_field_value(record, field_name), 
-                   class: "px-3 py-2 bg-gray-100 border border-gray-300 rounded text-gray-600")
+                   class: "px-3 py-2 bg-gray-100 border border-gray-500 text-gray-600")
       elsif config&.has_custom_edit?
         # Render using custom edit callback
         render_custom_edit_field(config, record, form)
@@ -149,13 +177,13 @@ module ElaineCrud
     def render_default_form_field(form, record, field_name)
       column = record.class.columns.find { |c| c.name == field_name.to_s }
       
-      field_class = "block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+      field_class = "block w-full border border-gray-500 focus:border-gray-700 text-sm bg-white px-3 py-2"
       
       case column&.type
       when :text
-        form.text_area(field_name, class: "#{field_class} resize-vertical", rows: 2)
+        form.text_area(field_name, class: "#{field_class} resize-vertical", rows: 3)
       when :boolean
-        form.check_box(field_name, class: "rounded border-gray-300 text-blue-600 focus:ring-blue-500")
+        form.check_box(field_name, class: "border border-gray-500 focus:border-gray-700 w-4 h-4")
       when :date
         form.date_field(field_name, class: field_class)
       when :datetime, :timestamp
@@ -206,7 +234,7 @@ module ElaineCrud
     # @param config [FieldConfiguration] The field configuration
     # @return [String] HTML-safe form field
     def render_options_field(form, field_name, config)
-      field_class = "block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+      field_class = "block w-full border border-gray-500 focus:border-gray-700 text-sm bg-white px-3 py-2"
       
       # Handle both array and hash options
       options = case config.options
@@ -229,7 +257,7 @@ module ElaineCrud
     # @param config [FieldConfiguration] The field configuration
     # @return [String] HTML-safe form field
     def render_foreign_key_field(form, field_name, config)
-      field_class = "block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+      field_class = "block w-full border border-gray-500 focus:border-gray-700 text-sm bg-white px-3 py-2"
       
       options = foreign_key_options_for_field(field_name)
       

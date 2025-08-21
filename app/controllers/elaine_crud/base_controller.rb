@@ -57,8 +57,6 @@ module ElaineCrud
       # Handle inline editing mode
       @edit_record_id = params[:edit].to_i if params[:edit].present?
       @editing_record = @edit_record_id ? find_record_by_id(@edit_record_id) : nil
-      
-      render 'elaine_crud/base/index'
     end
     
     def show

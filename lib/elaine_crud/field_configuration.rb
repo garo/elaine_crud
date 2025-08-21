@@ -5,7 +5,8 @@ module ElaineCrud
   # Supports both hash-style and block-style DSL configuration
   class FieldConfiguration
     attr_accessor :field_name, :title, :description, :readonly, :default_value,
-                  :display_callback, :edit_callback, :options, :foreign_key_config
+                  :display_callback, :edit_callback, :options, :foreign_key_config,
+                  :grid_column_span, :grid_row_span
 
     def initialize(field_name, **options)
       @field_name = field_name
@@ -19,6 +20,8 @@ module ElaineCrud
       @edit_callback = options.fetch(:edit_as, nil)
       @options = options.fetch(:options, nil)
       @foreign_key_config = options.fetch(:foreign_key, nil)
+      @grid_column_span = options.fetch(:grid_column_span, 1)
+      @grid_row_span = options.fetch(:grid_row_span, 1)
     end
 
     # Block-style DSL methods
@@ -60,6 +63,16 @@ module ElaineCrud
     def foreign_key(**config)
       return @foreign_key_config if config.empty?
       @foreign_key_config = config
+    end
+
+    def grid_column_span(value = nil)
+      return @grid_column_span if value.nil?
+      @grid_column_span = value
+    end
+
+    def grid_row_span(value = nil)
+      return @grid_row_span if value.nil?
+      @grid_row_span = value
     end
 
     # Helper methods for checking configuration state

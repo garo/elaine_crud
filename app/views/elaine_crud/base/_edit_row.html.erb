@@ -1,40 +1,42 @@
-<%# Inline edit row partial - shows form fields within the table row %>
-<tr class="bg-blue-50 border-2 border-blue-200">
-  <%= form_with model: record, url: url_for(action: :update, id: record.id), 
-                local: true, class: "contents" do |form| %>
+<%# Edit form within the record container - each field on its own line in 3-column layout %>
+<div class="bg-blue-50 border-2 border-blue-400 p-4">
+  <%= form_with model: record, url: url_for(action: :update, id: record.id), local: true do |form| %>
     <%= hidden_field_tag :from_inline_edit, true %>
     
-    <% @columns.each do |column| %>
-      <td class="px-6 py-4 text-sm text-gray-900">
-        <div class="space-y-1">
-          <div class="text-xs font-medium text-gray-700">
-            <%= field_title(column.to_sym) %>
-            <% if record.errors[column.to_sym].any? %>
-              <span class="text-red-500 font-normal">
-                (<%= record.errors[column.to_sym].first %>)
-              </span>
-            <% end %>
-          </div>
-          <div>
-            <%= render_form_field(form, record, column.to_sym) %>
-          </div>
-          <% if field_description(column.to_sym).present? %>
-            <div class="text-xs text-gray-500">
-              <%= field_description(column.to_sym) %>
+    <%# Single CSS Grid container with synchronized column widths %>
+    <div class="grid gap-x-4 gap-y-4" style="grid-template-columns: 1fr 2fr 1fr;">
+      <% @columns.each_with_index do |column, index| %>
+        <%# Column 1: Field Name/Title %>
+        <div class="text-sm font-medium text-gray-700 py-3 <%= 'border-b border-blue-200' unless index == @columns.length - 1 %>">
+          <%= field_title(column.to_sym) %>
+          <% if record.errors[column.to_sym].any? %>
+            <div class="text-red-500 font-normal text-xs mt-1">
+              <%= record.errors[column.to_sym].first %>
             </div>
           <% end %>
         </div>
-      </td>
-    <% end %>
+        
+        <%# Column 2: Form Input %>
+        <div class="py-2 <%= 'border-b border-blue-200' unless index == @columns.length - 1 %>">
+          <%= render_form_field(form, record, column.to_sym) %>
+        </div>
+        
+        <%# Column 3: Field Description %>
+        <div class="text-xs text-gray-500 py-3 <%= 'border-b border-blue-200' unless index == @columns.length - 1 %>">
+          <% if field_description(column.to_sym).present? %>
+            <%= field_description(column.to_sym) %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
     
-    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-      <div class="flex space-x-2">
-        <%= form.submit "Save", 
-            class: "bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-3 rounded text-xs" %>
-        <%= link_to "Cancel", 
-            url_for(action: :index), 
-            class: "bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-1 px-3 rounded text-xs" %>
-      </div>
-    </td>
+    <%# Action buttons at the bottom %>
+    <div class="flex justify-end space-x-3 pt-6 border-t-2 border-blue-300 mt-6">
+      <%= form.submit "Save Changes", 
+          class: "bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded shadow-md border border-green-700" %>
+      <%= link_to "Cancel", 
+          url_for(action: :index), 
+          class: "bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-6 rounded shadow-md border-2 border-gray-400" %>
+    </div>
   <% end %>
-</tr>
+</div>

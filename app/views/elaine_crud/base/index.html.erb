@@ -7,52 +7,56 @@
   </div>
 
   <% if @records.any? %>
-    <div class="bg-white shadow-md rounded-lg overflow-hidden">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
-          <tr>
-            <% @columns.each do |column| %>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                <%# TODO: Add sorting functionality - make headers clickable %>
-                <%= field_title(column.to_sym) %>
-              </th>
-            <% end %>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Actions
-            </th>
-          </tr>
-        </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
-          <% @records.each do |record| %>
-            <% if @editing_record && @editing_record.id == record.id %>
-              <%# Render inline edit form for this record %>
-              <%= render 'elaine_crud/base/edit_row', record: @editing_record %>
-            <% else %>
-              <%# Render normal view row %>
-              <tr class="hover:bg-gray-50">
-                <% @columns.each do |column| %>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <%# TODO: Implement search/filter functionality for this column %>
-                    <%= display_field_value(record, column.to_sym) %>
-                  </td>
-                <% end %>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <div class="flex space-x-2">
-                    <%= link_to "Edit", 
-                        url_for(action: :index, edit: record.id), 
-                        class: "text-green-600 hover:text-green-900" %>
-                    <%= link_to "Delete", 
-                        url_for(action: :destroy, id: record.id), 
-                        method: :delete,
-                        data: { confirm: "Are you sure?" },
-                        class: "text-red-600 hover:text-red-900" %>
-                  </div>
-                </td>
-              </tr>
-            <% end %>
+    <%# Calculate the maximum number of grid columns needed based on field spans %>
+    <% total_columns = @columns.sum { |column| field_grid_column_span(column.to_sym) } + 1 %>
+    
+    <div class="bg-white shadow-md overflow-hidden border border-gray-300">
+      <%# Header row with table-like styling %>
+      <div class="grid border-b-2 border-gray-300 bg-gray-100" style="grid-template-columns: repeat(<%= total_columns %>, minmax(0, 1fr));">
+        <% @columns.each do |column| %>
+          <div class="px-3 py-3 text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-200 last:border-r-0 <%= field_grid_classes(column.to_sym) %>">
+            <%# TODO: Add sorting functionality - make headers clickable %>
+            <%= field_title(column.to_sym) %>
+          </div>
+        <% end %>
+        <div class="px-3 py-3 text-xs font-medium text-gray-700 uppercase tracking-wider">
+          Actions
+        </div>
+      </div>
+
+      <%# Records grid with table-like styling %>
+      <% @records.each_with_index do |record, index| %>
+        <% record_id = "record_#{record.id}" %>
+        <% row_bg_class = index.even? ? "bg-white" : "bg-gray-50" %>
+        <div class="record border-b border-gray-200 last:border-b-0 <%= row_bg_class %> hover:bg-blue-50" id="<%= record_id %>">
+          <% if @editing_record && @editing_record.id == record.id %>
+            <%# Render inline edit form for this record %>
+            <%= render 'elaine_crud/base/edit_row', record: @editing_record %>
+          <% else %>
+            <%# Render normal view row as grid %>
+            <div class="grid" style="grid-template-columns: repeat(<%= total_columns %>, minmax(0, 1fr));">
+              <% @columns.each do |column| %>
+                <div class="px-3 py-3 text-sm text-gray-900 border-r border-gray-200 last:border-r-0 <%= field_grid_classes(column.to_sym) %>">
+                  <%# TODO: Implement search/filter functionality for this column %>
+                  <%= display_field_value(record, column.to_sym) %>
+                </div>
+              <% end %>
+              <div class="px-3 py-3 text-sm text-gray-500">
+                <div class="flex space-x-2">
+                  <%= link_to "Edit", 
+                      url_for(action: :index, edit: record.id), 
+                      class: "text-green-600 hover:text-green-900" %>
+                  <%= link_to "Delete", 
+                      url_for(action: :destroy, id: record.id), 
+                      method: :delete,
+                      data: { confirm: "Are you sure?" },
+                      class: "text-red-600 hover:text-red-900" %>
+                </div>
+              </div>
+            </div>
           <% end %>
-        </tbody>
-      </table>
+        </div>
+      <% end %>
     </div>
   <% else %>
     <div class="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
