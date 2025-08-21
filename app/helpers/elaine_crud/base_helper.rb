@@ -362,5 +362,60 @@ module ElaineCrud
     def model_name
       controller.model_name
     end
+    
+    # Generate a sort URL for a column
+    # @param column [Symbol] The column to sort by
+    # @return [String] URL with sort parameters
+    def sort_url_for(column)
+      current_column = controller.current_sort_column
+      current_direction = controller.current_sort_direction
+      
+      # If clicking on the same column, toggle direction
+      if current_column.to_s == column.to_s
+        new_direction = controller.toggle_sort_direction(current_direction)
+      else
+        # New column, default to ascending
+        new_direction = :asc
+      end
+      
+      # Preserve other parameters and add/update sort parameters
+      url_params = request.params.except(:action, :controller).merge({
+        sort: column,
+        direction: new_direction
+      })
+      
+      url_for(url_params)
+    end
+    
+    # Check if a column is currently being sorted
+    # @param column [Symbol] The column to check
+    # @return [Boolean] True if this column is being sorted
+    def column_sorted?(column)
+      controller.current_sort_column.to_s == column.to_s
+    end
+    
+    # Get sort direction for a column
+    # @param column [Symbol] The column to check
+    # @return [Symbol, nil] The sort direction if this column is sorted
+    def column_sort_direction(column)
+      column_sorted?(column) ? controller.current_sort_direction : nil
+    end
+    
+    # Generate sort direction indicator (arrow) for column header
+    # @param column [Symbol] The column to generate indicator for
+    # @return [String] HTML for sort indicator
+    def sort_indicator(column)
+      return '' unless column_sorted?(column)
+      
+      direction = column_sort_direction(column)
+      case direction
+      when :asc
+        content_tag(:span, '↑', class: 'text-blue-600 font-bold ml-1')
+      when :desc
+        content_tag(:span, '↓', class: 'text-blue-600 font-bold ml-1')
+      else
+        ''
+      end
+    end
   end
 end

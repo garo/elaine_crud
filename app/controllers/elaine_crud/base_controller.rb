@@ -9,10 +9,12 @@ module ElaineCrud
   #     permit_params :name, :email, :phone
   #   end
   class BaseController < ActionController::Base
+    include ElaineCrud::SortingConcern
+    
     protect_from_forgery with: :exception
     # No layout specified - host app controllers should set their own layout
     
-    class_attribute :crud_model, :permitted_attributes, :column_configurations, :field_configurations
+    class_attribute :crud_model, :permitted_attributes, :column_configurations, :field_configurations, :default_sort_column, :default_sort_direction
     
     # DSL methods for configuration
     class << self
@@ -45,6 +47,14 @@ module ElaineCrud
         config.instance_eval(&block) if block_given?
         
         self.field_configurations[field_name.to_sym] = config
+      end
+      
+      # Configure default sorting
+      # @param column [Symbol] The column to sort by (default: :id)
+      # @param direction [Symbol] The sort direction :asc or :desc (default: :asc)
+      def default_sort(column: :id, direction: :asc)
+        self.default_sort_column = column
+        self.default_sort_direction = direction
       end
     end
     
@@ -237,6 +247,8 @@ module ElaineCrud
       render_field_display(record, field_name) # Placeholder
     end
     
+
+    
     private
     
     # Check if the request is coming from a Turbo Frame
@@ -247,8 +259,11 @@ module ElaineCrud
     # Fetch all records for index view
     # Can be overridden in subclasses for custom filtering/scoping
     def fetch_records
-      crud_model.all
+      records = crud_model.all
+      apply_sorting(records)
     end
+    
+
     
     # Find a single record by ID
     def find_record

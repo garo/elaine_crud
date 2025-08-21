@@ -15,8 +15,10 @@
       <div class="grid border-b-2 border-gray-300 bg-gray-100" style="grid-template-columns: repeat(<%= total_columns %>, minmax(0, 1fr));">
         <% @columns.each do |column| %>
           <div class="px-3 py-3 text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-200 last:border-r-0 <%= field_grid_classes(column.to_sym) %>">
-            <%# TODO: Add sorting functionality - make headers clickable %>
-            <%= field_title(column.to_sym) %>
+            <%= link_to sort_url_for(column.to_sym), class: "flex items-center hover:text-blue-600 transition-colors duration-200" do %>
+              <span><%= field_title(column.to_sym) %></span>
+              <%= sort_indicator(column.to_sym).html_safe %>
+            <% end %>
           </div>
         <% end %>
         <div class="px-3 py-3 text-xs font-medium text-gray-700 uppercase tracking-wider">

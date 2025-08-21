@@ -6,9 +6,10 @@ module ElaineCrud
   class Engine < ::Rails::Engine
     # Non-mountable engine - do not call isolate_namespace
     
-    # Make sure our app directories are available
+    # Make sure our app directories and lib directories are available
     config.autoload_paths << File.expand_path('../../app/controllers', __dir__)
     config.autoload_paths << File.expand_path('../../app/helpers', __dir__)
+    config.autoload_paths << File.expand_path('..', __dir__)
     
     # Ensure views are available in the view path
     initializer 'elaine_crud.append_view_paths' do |app|
