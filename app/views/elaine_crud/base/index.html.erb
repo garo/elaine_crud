@@ -7,17 +7,21 @@
   </div>
 
   <% if @records.any? %>
-    <%# Calculate the maximum number of grid columns needed based on field spans %>
-    <% total_columns = @columns.sum { |column| field_grid_column_span(column.to_sym) } + 1 %>
+    <%# Calculate layout header to determine grid structure %>
+    <% header_layout = calculate_layout_header(@columns.map(&:to_sym)) %>
     
     <div class="bg-white shadow-md overflow-hidden border border-gray-300">
-      <%# Header row with table-like styling %>
-      <div class="grid border-b-2 border-gray-300 bg-gray-100" style="grid-template-columns: repeat(<%= total_columns %>, minmax(0, 1fr));">
-        <% @columns.each do |column| %>
-          <div class="px-3 py-3 text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-200 last:border-r-0 <%= field_grid_classes(column.to_sym) %>">
-            <%= link_to sort_url_for(column.to_sym), class: "flex items-center hover:text-blue-600 transition-colors duration-200" do %>
-              <span><%= field_title(column.to_sym) %></span>
-              <%= sort_indicator(column.to_sym).html_safe %>
+      <%# Header row with layout-based styling %>
+      <div class="grid border-b-2 border-gray-300 bg-gray-100" style="grid-template-columns: <%= header_layout.map { |config| config[:width] }.join(' ') %>;">
+        <% header_layout[0..-2].each do |header_config| %>
+          <div class="px-3 py-3 text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-200 last:border-r-0">
+            <% if header_column_sortable?(header_config) %>
+              <%= link_to sort_url_for(header_config[:field_name]), class: "flex items-center hover:text-blue-600 transition-colors duration-200" do %>
+                <span><%= header_column_title(header_config) %></span>
+                <%= sort_indicator(header_config[:field_name]).html_safe %>
+              <% end %>
+            <% else %>
+              <span><%= header_column_title(header_config) %></span>
             <% end %>
           </div>
         <% end %>
@@ -36,7 +40,7 @@
             <%= render 'elaine_crud/base/edit_row', record: @editing_record, columns: @columns %>
           <% else %>
             <%# Render normal view row %>
-            <%= render 'elaine_crud/base/view_row', record: record, columns: @columns, total_columns: total_columns %>
+            <%= render 'elaine_crud/base/view_row', record: record, columns: @columns, header_layout: header_layout %>
           <% end %>
         </div>
       <% end %>

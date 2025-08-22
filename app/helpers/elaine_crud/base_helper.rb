@@ -114,33 +114,7 @@ module ElaineCrud
       controller.field_description(field_name)
     end
 
-    # Get CSS Grid column span for a field
-    # @param field_name [Symbol] The field name
-    # @return [Integer] The column span (default 1)
-    def field_grid_column_span(field_name)
-      controller.field_config_for(field_name)&.grid_column_span || 1
-    end
 
-    # Get CSS Grid row span for a field
-    # @param field_name [Symbol] The field name
-    # @return [Integer] The row span (default 1)
-    def field_grid_row_span(field_name)
-      controller.field_config_for(field_name)&.grid_row_span || 1
-    end
-
-    # Generate CSS Grid classes for a field
-    # @param field_name [Symbol] The field name
-    # @return [String] CSS classes for grid positioning
-    def field_grid_classes(field_name)
-      column_span = field_grid_column_span(field_name)
-      row_span = field_grid_row_span(field_name)
-      
-      classes = []
-      classes << "col-span-#{column_span}" if column_span > 1
-      classes << "row-span-#{row_span}" if row_span > 1
-      
-      classes.join(' ')
-    end
 
     # Render form field using field configuration system
     # @param form [ActionView::Helpers::FormBuilder] The form builder
@@ -416,6 +390,41 @@ module ElaineCrud
       else
         ''
       end
+    end
+    
+    # Calculate layout structure for a record (helper method for views)
+    # @param content [ActiveRecord::Base] The record being displayed
+    # @param fields [Array<Symbol>] Array of field names to include in layout
+    # @return [Array<Array<Hash>>] Nested array layout structure
+    def calculate_layout(content, fields)
+      controller.calculate_layout(content, fields)
+    end
+    
+    # Calculate layout header structure (helper method for views)
+    # @param fields [Array<Symbol>] Array of field names to include in layout
+    # @return [Array<Hash>] Array of header config objects
+    def calculate_layout_header(fields)
+      controller.calculate_layout_header(fields)
+    end
+    
+    # Get the title for a header column
+    # @param header_config [Hash] Header config object
+    # @return [String] The title to display
+    def header_column_title(header_config)
+      if header_config[:title]
+        header_config[:title]
+      elsif header_config[:field_name]
+        field_title(header_config[:field_name])
+      else
+        ""
+      end
+    end
+    
+    # Check if a header column is sortable
+    # @param header_config [Hash] Header config object
+    # @return [Boolean] True if column has a field_name and is sortable
+    def header_column_sortable?(header_config)
+      header_config[:field_name].present?
     end
   end
 end

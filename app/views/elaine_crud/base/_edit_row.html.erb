@@ -4,32 +4,42 @@
   <%= form_with model: record, url: url_for(action: :update, id: record.id) do |form| %>
     <%= hidden_field_tag :from_inline_edit, true %>
     
-    <%# Single CSS Grid container with synchronized column widths %>
-    <div class="grid gap-x-4 gap-y-4" style="grid-template-columns: 1fr 2fr 1fr;">
-      <% columns.each_with_index do |column, index| %>
-        <%# Column 1: Field Name/Title %>
-        <div class="text-sm font-medium text-gray-700 py-3 <%= 'border-b border-blue-200' unless index == columns.length - 1 %>">
-          <%= field_title(column.to_sym) %>
-          <% if record.errors[column.to_sym].any? %>
-            <div class="text-red-500 font-normal text-xs mt-1">
-              <%= record.errors[column.to_sym].first %>
-            </div>
-          <% end %>
-        </div>
-        
-        <%# Column 2: Form Input %>
-        <div class="py-2 <%= 'border-b border-blue-200' unless index == columns.length - 1 %>">
-          <%= render_form_field(form, record, column.to_sym) %>
-        </div>
-        
-        <%# Column 3: Field Description %>
-        <div class="text-xs text-gray-500 py-3 <%= 'border-b border-blue-200' unless index == columns.length - 1 %>">
-          <% if field_description(column.to_sym).present? %>
-            <%= field_description(column.to_sym) %>
-          <% end %>
-        </div>
-      <% end %>
-    </div>
+    <%# Calculate layout for this record %>
+    <% record_layout = calculate_layout(record, columns.map(&:to_sym)) %>
+    
+    <%# Render layout rows for editing -->
+    <% record_layout.each_with_index do |layout_row, row_index| %>
+      <%# Single CSS Grid container with synchronized column widths %>
+      <div class="grid gap-x-4 gap-y-4 <%= 'mb-4' unless row_index == record_layout.length - 1 %>" style="grid-template-columns: 1fr 2fr 1fr;">
+        <% layout_row.each_with_index do |column_config, col_index| %>
+          <% field_name = column_config[:field_name] %>
+          <% colspan = column_config[:colspan] || 1 %>
+          <% rowspan = column_config[:rowspan] || 1 %>
+          
+          <%# Column 1: Field Name/Title %>
+          <div class="text-sm font-medium text-gray-700 py-3 <%= 'border-b border-blue-200' unless col_index == layout_row.length - 1 %> <%= 'col-span-' + colspan.to_s if colspan > 1 %>">
+            <%= field_title(field_name) %>
+            <% if record.errors[field_name].any? %>
+              <div class="text-red-500 font-normal text-xs mt-1">
+                <%= record.errors[field_name].first %>
+              </div>
+            <% end %>
+          </div>
+          
+          <%# Column 2: Form Input %>
+          <div class="py-2 <%= 'border-b border-blue-200' unless col_index == layout_row.length - 1 %> <%= 'col-span-' + colspan.to_s if colspan > 1 %>">
+            <%= render_form_field(form, record, field_name) %>
+          </div>
+          
+          <%# Column 3: Field Description %>
+          <div class="text-xs text-gray-500 py-3 <%= 'border-b border-blue-200' unless col_index == layout_row.length - 1 %> <%= 'col-span-' + colspan.to_s if colspan > 1 %>">
+            <% if field_description(field_name).present? %>
+              <%= field_description(field_name) %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
     
     <%# Action buttons at the bottom %>
     <div class="flex justify-end space-x-3 pt-6 border-t-2 border-blue-300 mt-6">

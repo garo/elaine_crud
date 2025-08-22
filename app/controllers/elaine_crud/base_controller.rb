@@ -117,8 +117,8 @@ module ElaineCrud
       if @record.update(record_params)
         # For Turbo Frame requests, return the view row partial
         if turbo_frame_request?
-          total_columns = @columns.sum { |column| field_config_for(column.to_sym)&.grid_column_span || 1 } + 1
-          render partial: 'elaine_crud/base/view_row', locals: { record: @record, columns: @columns, total_columns: total_columns }
+          header_layout = calculate_layout_header(@columns.map(&:to_sym))
+          render partial: 'elaine_crud/base/view_row', locals: { record: @record, columns: @columns, header_layout: header_layout }
         elsif params[:from_inline_edit]
           # Legacy inline edit mode (will be deprecated)
           redirect_to url_for(action: :index), notice: "#{crud_model.name} was successfully updated."
@@ -149,8 +149,8 @@ module ElaineCrud
       
       # For Turbo Frame requests, return just the view row partial
       if turbo_frame_request?
-        total_columns = @columns.sum { |column| field_config_for(column.to_sym)&.grid_column_span || 1 } + 1
-        render partial: 'elaine_crud/base/view_row', locals: { record: @record, columns: @columns, total_columns: total_columns }
+        header_layout = calculate_layout_header(@columns.map(&:to_sym))
+        render partial: 'elaine_crud/base/view_row', locals: { record: @record, columns: @columns, header_layout: header_layout }
       else
         # For direct access, redirect to index
         redirect_to url_for(action: :index)
@@ -198,6 +198,44 @@ module ElaineCrud
     # @return [String, nil] The field description if configured
     def field_description(field_name)
       field_config_for(field_name)&.description
+    end
+    
+    # Calculate layout structure for a specific record
+    # @param content [ActiveRecord::Base] The record being displayed
+    # @param fields [Array<Symbol>] Array of field names to include in layout
+    # @return [Array<Array<Hash>>] Nested array where first dimension is rows, second is columns
+    #   Each column hash can contain: field_name, colspan, rowspan, and future properties
+    def calculate_layout(content, fields)
+      # Default implementation: single row with all fields, each taking 1 column and 1 row
+      row = fields.map do |field_name|
+        {
+          field_name: field_name,
+          colspan: 1,
+          rowspan: 1
+        }
+      end
+      
+      [row] # Return single row
+    end
+    
+    # Calculate layout header structure defining column sizes and titles
+    # @param fields [Array<Symbol>] Array of field names to include in layout
+    # @return [Array<Hash>] Array of header config objects with width, field_name, and/or title
+    #   Each object can contain:
+    #   - width: CSS width (required, e.g., "25%")  
+    #   - field_name: Symbol of field to display and enable sorting (optional)
+    #   - title: Custom column title, overrides field title (optional)
+    def calculate_layout_header(fields)
+      # Default implementation: equal distribution with field names for sorting
+      field_count = fields.length + 1 # plus one for actions column
+      percentage = (100.0 / field_count).round(1)
+      
+      fields.map do |field_name|
+        {
+          width: "#{percentage}%",
+          field_name: field_name
+        }
+      end
     end
     
     # Check if a field is readonly

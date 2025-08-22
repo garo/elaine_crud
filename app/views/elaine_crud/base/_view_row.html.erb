@@ -1,24 +1,37 @@
 <%# View mode row wrapped in turbo-frame for seamless inline editing %>
 <turbo-frame id="record_<%= record.id %>">
-  <%# Normal view row as grid - needs columns and total_columns variables from parent %>
-  <div class="grid" style="grid-template-columns: repeat(<%= total_columns %>, minmax(0, 1fr));">
-    <% columns.each do |column| %>
-      <div class="px-3 py-3 text-sm text-gray-900 border-r border-gray-200 last:border-r-0 <%= field_grid_classes(column.to_sym) %>">
-        <%# TODO: Implement search/filter functionality for this column %>
-        <%= display_field_value(record, column.to_sym) %>
-      </div>
+  <%# Calculate layout for this record %>
+  <% record_layout = calculate_layout(record, columns.map(&:to_sym)) %>
+  
+  <%# Render layout rows %>
+  <div class="grid" style="grid-template-columns: <%= header_layout.map { |config| config[:width] }.join(' ') %>;">
+    <% record_layout.each_with_index do |layout_row, row_index| %>
+      <% layout_row.each do |column_config| %>
+        <% field_name = column_config[:field_name] %>
+        <% colspan = column_config[:colspan] || 1 %>
+        <% rowspan = column_config[:rowspan] || 1 %>
+        
+        <div class="px-3 py-3 text-sm text-gray-900 border-r border-gray-200 last:border-r-0 <%= 'col-span-' + colspan.to_s if colspan > 1 %> <%= 'row-span-' + rowspan.to_s if rowspan > 1 %>">
+          <%# TODO: Implement search/filter functionality for this column %>
+          <%= display_field_value(record, field_name) %>
+        </div>
+      <% end %>
+      
+      <%# Actions column (only on first row) %>
+      <% if row_index == 0 %>
+        <div class="px-3 py-3 text-sm text-gray-500 <%= 'row-span-' + record_layout.length.to_s if record_layout.length > 1 %>">
+          <div class="flex space-x-2">
+            <%= link_to "Edit", 
+                url_for(action: :edit, id: record.id), 
+                class: "text-green-600 hover:text-green-900" %>
+            <%= link_to "Delete", 
+                url_for(action: :destroy, id: record.id), 
+                method: :delete,
+                data: { confirm: "Are you sure?" },
+                class: "text-red-600 hover:text-red-900" %>
+          </div>
+        </div>
+      <% end %>
     <% end %>
-    <div class="px-3 py-3 text-sm text-gray-500">
-      <div class="flex space-x-2">
-        <%= link_to "Edit", 
-            url_for(action: :edit, id: record.id), 
-            class: "text-green-600 hover:text-green-900" %>
-        <%= link_to "Delete", 
-            url_for(action: :destroy, id: record.id), 
-            method: :delete,
-            data: { confirm: "Are you sure?" },
-            class: "text-red-600 hover:text-red-900" %>
-      </div>
-    </div>
   </div>
 </turbo-frame>

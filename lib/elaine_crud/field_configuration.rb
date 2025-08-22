@@ -6,7 +6,7 @@ module ElaineCrud
   class FieldConfiguration
     attr_accessor :field_name, :title, :description, :readonly, :default_value,
                   :display_callback, :edit_callback, :options, :foreign_key_config,
-                  :grid_column_span, :grid_row_span, :visible
+                  :visible
 
     def initialize(field_name, **options)
       @field_name = field_name
@@ -20,8 +20,6 @@ module ElaineCrud
       @edit_callback = options.fetch(:edit_as, nil)
       @options = options.fetch(:options, nil)
       @foreign_key_config = options.fetch(:foreign_key, nil)
-      @grid_column_span = options.fetch(:grid_column_span, 1)
-      @grid_row_span = options.fetch(:grid_row_span, 1)
       @visible = options.fetch(:visible, nil)
     end
 
@@ -66,15 +64,7 @@ module ElaineCrud
       @foreign_key_config = config
     end
 
-    def grid_column_span(value = nil)
-      return @grid_column_span if value.nil?
-      @grid_column_span = value
-    end
 
-    def grid_row_span(value = nil)
-      return @grid_row_span if value.nil?
-      @grid_row_span = value
-    end
 
     def visible(value = nil)
       return @visible if value.nil?
