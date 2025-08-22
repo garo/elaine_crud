@@ -227,7 +227,8 @@ module ElaineCrud
     #   - title: Custom column title, overrides field title (optional)
     def calculate_layout_header(fields)
       # Default implementation: equal distribution with field names for sorting
-      field_count = fields.length + 1 # plus one for actions column
+      fields << "ROW-ACTIONS"
+      field_count = fields.length
       percentage = (100.0 / field_count).round(1)
       
       fields.map do |field_name|
