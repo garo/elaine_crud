@@ -7,7 +7,7 @@
     <%# Calculate layout for this record %>
     <% record_layout = calculate_layout(record, columns.map(&:to_sym)) %>
     
-    <%# Render layout rows for editing -->
+    <%# Render layout rows for editing %>
     <% record_layout.each_with_index do |layout_row, row_index| %>
       <%# Single CSS Grid container with synchronized column widths %>
       <div class="grid gap-x-4 gap-y-4 <%= 'mb-4' unless row_index == record_layout.length - 1 %>" style="grid-template-columns: 1fr 2fr 1fr;">

@@ -33,7 +33,8 @@
             <%= render 'elaine_crud/base/edit_row', record: @record, columns: @columns %>
           <% else %>
             <%# Render normal view row %>
-            <%= render 'elaine_crud/base/view_row', record: record, columns: @columns, total_columns: total_columns %>
+            <% header_layout = calculate_layout_header(@columns.map(&:to_sym)) %>
+            <%= render 'elaine_crud/base/view_row', record: record, columns: @columns, header_layout: header_layout %>
           <% end %>
         </div>
       <% end %>

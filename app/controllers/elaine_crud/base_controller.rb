@@ -22,12 +22,59 @@ module ElaineCrud
       # @param model_class [Class] The ActiveRecord model class
       def model(model_class)
         self.crud_model = model_class
+        # Auto-configure foreign key fields after setting the model
+        auto_configure_foreign_keys if model_class
+        # Re-run permit_params to include foreign keys if it was called before model was set
+        refresh_permitted_attributes
       end
       
       # Specify permitted parameters for strong params
       # @param attrs [Array<Symbol>] List of permitted attributes
       def permit_params(*attrs)
-        self.permitted_attributes = attrs
+        # Store manual attributes for later refresh if needed
+        @manual_permitted_attributes = attrs
+        
+        # Auto-include foreign keys from belongs_to relationships
+        foreign_keys = get_foreign_keys_from_model
+        final_attrs = (attrs + foreign_keys).uniq
+        self.permitted_attributes = final_attrs
+        
+        # Debug logging for development
+        if Rails.env.development?
+          Rails.logger.info "ElaineCrud: Setting permitted attributes to: #{final_attrs.inspect}"
+          Rails.logger.info "ElaineCrud: Manual attributes: #{attrs.inspect}"
+          Rails.logger.info "ElaineCrud: Auto-detected foreign keys: #{foreign_keys.inspect}"
+        end
+      end
+      
+      # Get foreign keys from belongs_to relationships
+      # @return [Array<Symbol>] List of foreign key attributes
+      def get_foreign_keys_from_model
+        return [] unless crud_model
+        
+        foreign_keys = []
+        crud_model.reflections.each do |name, reflection|
+          next unless reflection.is_a?(ActiveRecord::Reflection::BelongsToReflection)
+          foreign_keys << reflection.foreign_key.to_sym
+        end
+        
+        foreign_keys
+      end
+      
+      # Store the manually specified attributes for later use
+      attr_accessor :manual_permitted_attributes
+      
+      # Refresh permitted attributes (called when model is set after permit_params)
+      def refresh_permitted_attributes
+        return unless @manual_permitted_attributes
+        
+        foreign_keys = get_foreign_keys_from_model
+        final_attrs = (@manual_permitted_attributes + foreign_keys).uniq
+        self.permitted_attributes = final_attrs
+        
+        if Rails.env.development?
+          Rails.logger.info "ElaineCrud: Refreshed permitted attributes to: #{final_attrs.inspect}"
+        end
       end
       
       # Configure columns (for future use)
@@ -55,6 +102,79 @@ module ElaineCrud
       def default_sort(column: :id, direction: :asc)
         self.default_sort_column = column
         self.default_sort_direction = direction
+      end
+      
+      # Automatically configure foreign key fields based on belongs_to relationships
+      # This method is called automatically when the model is set
+      def auto_configure_foreign_keys
+        return unless crud_model
+        
+        # Initialize field configurations if not already done
+        self.field_configurations ||= {}
+        
+        # Find all belongs_to relationships
+        crud_model.reflections.each do |name, reflection|
+          next unless reflection.is_a?(ActiveRecord::Reflection::BelongsToReflection)
+          
+          foreign_key = reflection.foreign_key.to_sym
+          
+          # Skip if already manually configured
+          next if field_configurations[foreign_key]
+          
+          # Auto-configure this foreign key field
+          auto_configure_belongs_to_field(reflection)
+        end
+      end
+      
+      private
+      
+      # Auto-configure a single belongs_to foreign key field
+      # @param reflection [ActiveRecord::Reflection::BelongsToReflection] The belongs_to reflection
+      def auto_configure_belongs_to_field(reflection)
+        foreign_key = reflection.foreign_key.to_sym
+        related_model = reflection.klass
+        
+        # Try to determine the display field for the related model
+        display_field = determine_display_field_for_model(related_model)
+        
+        # Create field configuration
+        config = ElaineCrud::FieldConfiguration.new(
+          foreign_key,
+          title: reflection.name.to_s.humanize,
+          foreign_key: {
+            model: related_model,
+            display: display_field,
+            null_option: "Select #{reflection.name.to_s.humanize}"
+          }
+        )
+        
+        self.field_configurations[foreign_key] = config
+      end
+      
+      # Determine the best display field for a model
+      # @param model_class [Class] The ActiveRecord model class
+      # @return [Symbol] The field to use for display
+      def determine_display_field_for_model(model_class)
+        # Common field names for display, in order of preference
+        display_candidates = [:name, :title, :display_name, :full_name, :label, :description]
+        
+        # Check which columns exist
+        column_names = model_class.column_names.map(&:to_sym)
+        
+        # Return the first matching candidate
+        display_field = display_candidates.find { |candidate| column_names.include?(candidate) }
+        
+        # If none found, use the first string/text column that's not id, created_at, updated_at
+        unless display_field
+          string_columns = model_class.columns.select do |col|
+            [:string, :text].include?(col.type) && 
+            !%w[id created_at updated_at].include?(col.name)
+          end
+          display_field = string_columns.first&.name&.to_sym
+        end
+        
+        # Final fallback to :id
+        display_field || :id
       end
     end
     
@@ -114,7 +234,17 @@ module ElaineCrud
       @model_name = crud_model.name
       @columns = determine_columns
       
-      if @record.update(record_params)
+      update_params = record_params
+      
+      # Debug logging for development
+      if Rails.env.development?
+        Rails.logger.info "ElaineCrud: Attempting to update with params: #{update_params.inspect}"
+        Rails.logger.info "ElaineCrud: Record before update: #{@record.attributes.inspect}"
+      end
+      
+      if @record.update(update_params)
+        Rails.logger.info "ElaineCrud: Record updated successfully: #{@record.attributes.inspect}" if Rails.env.development?
+        
         # For Turbo Frame requests, return the view row partial
         if turbo_frame_request?
           header_layout = calculate_layout_header(@columns.map(&:to_sym))
@@ -127,6 +257,8 @@ module ElaineCrud
         end
       else
         # Handle validation errors
+        Rails.logger.warn "ElaineCrud: Record update failed with errors: #{@record.errors.full_messages}" if Rails.env.development?
+        
         if turbo_frame_request?
           # Return edit row partial with errors
           render partial: 'elaine_crud/base/edit_row', locals: { record: @record, columns: @columns }, status: :unprocessable_entity
@@ -299,6 +431,11 @@ module ElaineCrud
     # Can be overridden in subclasses for custom filtering/scoping
     def fetch_records
       records = crud_model.all
+      
+      # Include belongs_to relationships to avoid N+1 queries
+      includes_list = get_belongs_to_includes
+      records = records.includes(includes_list) if includes_list.any?
+      
       apply_sorting(records)
     end
     
@@ -320,7 +457,58 @@ module ElaineCrud
     def record_params
       return {} unless permitted_attributes.present?
       
-      params.require(crud_model.name.underscore.to_sym).permit(*permitted_attributes)
+      model_param_key = crud_model.name.underscore.to_sym
+      
+      # Debug logging for development
+      if Rails.env.development?
+        Rails.logger.info "ElaineCrud: Looking for params under key '#{model_param_key}'"
+        Rails.logger.info "ElaineCrud: Available param keys: #{params.keys.inspect}"
+        Rails.logger.info "ElaineCrud: Permitted attributes: #{permitted_attributes.inspect}"
+        Rails.logger.info "ElaineCrud: Model name: #{crud_model.name}"
+        Rails.logger.info "ElaineCrud: Model underscore: #{crud_model.name.underscore}"
+        
+        # Show the actual parameter structure
+        params.keys.each do |key|
+          if params[key].is_a?(ActionController::Parameters) || params[key].is_a?(Hash)
+            Rails.logger.info "ElaineCrud: params[#{key}] = #{params[key].inspect}"
+          end
+        end
+      end
+      
+      if params[model_param_key].present?
+        filtered_params = params.require(model_param_key).permit(*permitted_attributes)
+        Rails.logger.info "ElaineCrud: Successfully filtered params: #{filtered_params.inspect}" if Rails.env.development?
+        filtered_params
+      else
+        Rails.logger.warn "ElaineCrud: No parameters found for model '#{model_param_key}'" if Rails.env.development?
+        Rails.logger.info "ElaineCrud: Available top-level param structure:" if Rails.env.development?
+        params.each do |key, value|
+          Rails.logger.info "ElaineCrud:   #{key} => #{value.class} (#{value.is_a?(Hash) || value.is_a?(ActionController::Parameters) ? value.keys.inspect : value.inspect})"
+        end
+        {}
+      end
+    end
+    
+    # Get list of belongs_to associations to include for avoiding N+1 queries
+    # @return [Array<Symbol>] List of association names to include
+    def get_belongs_to_includes
+      return [] unless crud_model
+      
+      includes = []
+      
+      # Get all belongs_to relationships that are displayed
+      crud_model.reflections.each do |name, reflection|
+        next unless reflection.is_a?(ActiveRecord::Reflection::BelongsToReflection)
+        
+        foreign_key = reflection.foreign_key.to_sym
+        
+        # Include if this foreign key is in the displayed columns or configured
+        if determine_columns.include?(foreign_key.to_s) || field_configured?(foreign_key)
+          includes << name.to_sym
+        end
+      end
+      
+      includes
     end
     
     # Determine which columns to display
@@ -353,6 +541,25 @@ module ElaineCrud
       # Should handle both static values and proc/lambda callbacks
       # Should only apply to new records (record.new_record?)
       return record # Placeholder
+    end
+    
+    # Debug method to help troubleshoot configuration issues
+    # Call this in your controller in development to see the configuration
+    def debug_configuration
+      return unless Rails.env.development?
+      
+      puts "\n=== ElaineCrud Configuration Debug ==="
+      puts "Model: #{crud_model&.name || 'NOT SET'}"
+      puts "Permitted Attributes: #{permitted_attributes&.inspect || 'NOT SET'}"
+      puts "Field Configurations: #{field_configurations&.keys&.inspect || 'NONE'}"
+      
+      if crud_model
+        reflections = crud_model.reflections.select { |_, r| r.is_a?(ActiveRecord::Reflection::BelongsToReflection) }
+        puts "Belongs_to relationships: #{reflections.keys.inspect}"
+        puts "Foreign keys: #{reflections.values.map(&:foreign_key).inspect}"
+      end
+      
+      puts "====================================\n"
     end
   end
 end

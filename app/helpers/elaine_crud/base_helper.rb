@@ -233,7 +233,9 @@ module ElaineCrud
     def render_foreign_key_field(form, field_name, config)
       field_class = "block w-full border border-gray-500 focus:border-gray-700 text-sm bg-white px-3 py-2"
       
-      options = foreign_key_options_for_field(field_name)
+      # Get the current value of the field to pre-select it
+      current_value = form.object.public_send(field_name)
+      options = foreign_key_options_for_field(field_name, current_value)
       
       form.select(field_name, options, 
                  { include_blank: config.foreign_key_config[:null_option] || "Select..." },
@@ -242,46 +244,15 @@ module ElaineCrud
 
     # Get foreign key options for a specific field
     # @param field_name [Symbol] The field name
+    # @param selected_value [Object] The value to pre-select in the dropdown
     # @return [Array] Options suitable for select dropdown
-    def foreign_key_options_for_field(field_name)
+    def foreign_key_options_for_field(field_name, selected_value = nil)
       config = controller.field_config_for(field_name)
       return [] unless config&.has_foreign_key?
       
-      foreign_key_config = config.foreign_key_config
-      target_model = foreign_key_config[:model]
-      return [] unless target_model
-      
-      # Apply scope if provided, otherwise use all records
-      records = if foreign_key_config[:scope]
-        foreign_key_config[:scope].call
-      else
-        target_model.all
-      end
-      
-      # Format options for select
-      options = records.map do |record|
-        display_value = case foreign_key_config[:display]
-        when Symbol
-          record.respond_to?(foreign_key_config[:display]) ? 
-            record.public_send(foreign_key_config[:display]) : 
-            record.to_s
-        when Proc
-          foreign_key_config[:display].call(record)
-        else
-          record.to_s
-        end
-        
-        [display_value, record.id]
-      end
-      
-      options_for_select(options)
-    rescue => e
-      # Graceful error handling
-      if Rails.env.development?
-        options_for_select([["Error: #{e.message}", ""]])
-      else
-        []
-      end
+      # Use the new foreign_key_options method from FieldConfiguration
+      options = config.foreign_key_options(controller)
+      options_for_select(options, selected_value)
     end
 
     private
@@ -425,6 +396,41 @@ module ElaineCrud
     # @return [Boolean] True if column has a field_name and is sortable
     def header_column_sortable?(header_config)
       header_config[:field_name].present?
+    end
+    
+    # Get grid column span for a field (for CSS grid layouts)
+    # @param field_name [Symbol] The field name
+    # @return [Integer] Number of columns this field should span
+    def field_grid_column_span(field_name)
+      config = controller.field_config_for(field_name)
+      
+      # Check if field configuration specifies a column span
+      if config&.respond_to?(:grid_column_span) && config.grid_column_span
+        config.grid_column_span
+      else
+        # Default column span based on field type or configuration
+        case field_name.to_s
+        when /description|note|comment|content/i
+          # Text fields typically span more columns
+          2
+        else
+          # Default single column
+          1
+        end
+      end
+    end
+    
+    # Get CSS classes for grid field layout
+    # @param field_name [Symbol] The field name
+    # @return [String] CSS classes for grid column styling
+    def field_grid_classes(field_name)
+      span = field_grid_column_span(field_name)
+      classes = []
+      
+      # Add column span class if greater than 1
+      classes << "col-span-#{span}" if span > 1
+      
+      classes.join(' ')
     end
   end
 end

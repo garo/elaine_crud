@@ -6,7 +6,7 @@ module ElaineCrud
   class FieldConfiguration
     attr_accessor :field_name, :title, :description, :readonly, :default_value,
                   :display_callback, :edit_callback, :options, :foreign_key_config,
-                  :visible
+                  :visible, :grid_column_span
 
     def initialize(field_name, **options)
       @field_name = field_name
@@ -21,6 +21,7 @@ module ElaineCrud
       @options = options.fetch(:options, nil)
       @foreign_key_config = options.fetch(:foreign_key, nil)
       @visible = options.fetch(:visible, nil)
+      @grid_column_span = options.fetch(:grid_column_span, nil)
     end
 
     # Block-style DSL methods
@@ -69,6 +70,11 @@ module ElaineCrud
     def visible(value = nil)
       return @visible if value.nil?
       @visible = value
+    end
+    
+    def grid_column_span(value = nil)
+      return @grid_column_span if value.nil?
+      @grid_column_span = value
     end
 
     # Helper methods for checking configuration state
@@ -156,17 +162,43 @@ module ElaineCrud
 
     # Method to get foreign key options for dropdowns
     def foreign_key_options(controller_instance)
-      # TODO: Implement foreign key option loading
-      # 1. Validate @foreign_key_config has required keys (:model)
-      # 2. Get target model: @foreign_key_config[:model]
-      # 3. Apply scope if provided: @foreign_key_config[:scope]&.call || target_model.all
-      # 4. Format options for select:
-      #    - If display is Symbol: call method on each record
-      #    - If display is Proc: call with each record
-      #    - Default: call to_s on each record
-      # 5. Add null option if configured: @foreign_key_config[:null_option]
-      # 6. Return array of [display_text, value] pairs suitable for options_for_select
-      return [] # Placeholder
+      return [] unless has_foreign_key?
+      
+      # Validate required configuration
+      target_model = @foreign_key_config[:model]
+      return [] unless target_model
+      
+      # Get records using scope if provided, otherwise all records
+      records = if @foreign_key_config[:scope]
+        @foreign_key_config[:scope].call
+      else
+        target_model.all
+      end
+      
+      # Format options for select dropdown
+      options = records.map do |record|
+        display_value = case @foreign_key_config[:display]
+        when Symbol
+          record.respond_to?(@foreign_key_config[:display]) ? 
+            record.public_send(@foreign_key_config[:display]) : 
+            record.to_s
+        when Proc
+          @foreign_key_config[:display].call(record)
+        else
+          record.to_s
+        end
+        
+        [display_value, record.id]
+      end
+      
+      options
+    rescue => e
+      # Graceful error handling
+      if Rails.env.development?
+        [["Error: #{e.message}", ""]]
+      else
+        []
+      end
     end
 
     # Method to get default value for new records
