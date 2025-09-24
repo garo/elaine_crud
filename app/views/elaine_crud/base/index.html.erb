@@ -1,4 +1,33 @@
 <div class="container mx-auto px-4 py-8">
+  <% if @parent_context %>
+    <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <p class="text-sm text-blue-700">
+            <% if @parent_context[:error] %>
+              <strong>Error:</strong> <%= @parent_context[:error] %>
+            <% else %>
+              Showing <%= @model_name.pluralize.downcase %> for 
+              <strong><%= @parent_context[:model_class].name %>:</strong> 
+              <%= @parent_context[:record].public_send(controller.send(:determine_display_field_for_model, @parent_context[:model_class])) %>
+            <% end %>
+            
+            <span class="ml-4">
+              <%= link_to "View All #{@model_name.pluralize}", 
+                  url_for(action: :index, @parent_context[:foreign_key] => nil),
+                  class: "text-blue-600 underline hover:text-blue-800" %>
+            </span>
+          </p>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
   <div class="flex justify-between items-center mb-6">
     <h1 class="text-3xl font-bold text-gray-900"><%= @model_name.pluralize %></h1>
     <%= link_to "New #{@model_name}", 

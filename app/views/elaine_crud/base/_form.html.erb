@@ -1,6 +1,20 @@
 <%# Shared form partial for new and edit views %>
 <% form_url = record.persisted? ? url_for(action: :update, id: record.id) : url_for(action: :create) %>
 <%= form_with model: record, url: form_url, local: true, class: "space-y-6" do |form| %>
+  
+  <%# Handle parent context for has_many relationships %>
+  <% if @parent_context && @parent_context[:record] %>
+    <%= form.hidden_field @parent_context[:foreign_key], value: @parent_context[:record].id %>
+    
+    <div class="mb-4 p-3 bg-gray-50 rounded-md">
+      <p class="text-sm text-gray-600">
+        Creating <%= model_name.downcase %> for 
+        <strong><%= @parent_context[:model_class].name %>:</strong> 
+        <%= @parent_context[:record].public_send(controller.send(:determine_display_field_for_model, @parent_context[:model_class])) %>
+      </p>
+    </div>
+  <% end %>
+
   <%# Display validation errors if any %>
   <% if record.errors.any? %>
     <div class="bg-red-50 border border-red-200 rounded-md p-4">

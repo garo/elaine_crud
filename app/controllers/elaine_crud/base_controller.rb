@@ -24,6 +24,8 @@ module ElaineCrud
         self.crud_model = model_class
         # Auto-configure foreign key fields after setting the model
         auto_configure_foreign_keys if model_class
+        # Auto-configure has_many relationships
+        auto_configure_has_many_relationships if model_class
         # Re-run permit_params to include foreign keys if it was called before model was set
         refresh_permitted_attributes
       end
@@ -151,7 +153,65 @@ module ElaineCrud
         self.field_configurations[foreign_key] = config
       end
       
-      # Determine the best display field for a model
+      # Auto-configure has_many relationship display
+      def auto_configure_has_many_relationships
+        return unless crud_model
+        
+        self.field_configurations ||= {}
+        
+        # Find all has_many relationships
+        crud_model.reflections.each do |name, reflection|
+          next unless reflection.is_a?(ActiveRecord::Reflection::HasManyReflection)
+          
+          # Skip if already manually configured
+          field_name = name.to_sym
+          next if field_configurations[field_name]
+          
+          # Auto-configure this has_many field
+          auto_configure_has_many_field(reflection)
+        end
+      end
+      
+      # Auto-configure a single has_many relationship field
+      def auto_configure_has_many_field(reflection)
+        field_name = reflection.name.to_sym
+        related_model = reflection.klass
+        
+        # Determine display field for related records
+        display_field = determine_display_field_for_model(related_model)
+        
+        # Create field configuration for has_many
+        config = ElaineCrud::FieldConfiguration.new(
+          field_name,
+          title: reflection.name.to_s.humanize,
+          has_many: {
+            model: related_model,
+            display: display_field,
+            foreign_key: reflection.foreign_key,
+            show_count: true,
+            max_preview_items: 3
+          }
+        )
+        
+        self.field_configurations[field_name] = config
+      end
+      
+      # Configure has_many relationship display and behavior
+      def has_many_relation(relation_name, **options, &block)
+        self.field_configurations ||= {}
+        
+        config = ElaineCrud::FieldConfiguration.new(relation_name, **options)
+        config.instance_eval(&block) if block_given?
+        
+        # Set has_many specific configuration - extract only the has_many hash
+        if options[:has_many]
+          config.has_many(**options[:has_many])
+        end
+        
+        self.field_configurations[relation_name.to_sym] = config
+      end
+      
+      # Determine the best display field for a model (class method)
       # @param model_class [Class] The ActiveRecord model class
       # @return [Symbol] The field to use for display
       def determine_display_field_for_model(model_class)
@@ -199,6 +259,10 @@ module ElaineCrud
     def new
       @record = crud_model.new
       @model_name = crud_model.name
+      
+      # Pre-populate with parent relationship if filtering by parent
+      populate_parent_relationships(@record)
+      
       apply_field_defaults(@record)
       render 'elaine_crud/base/new'
     end
@@ -206,8 +270,12 @@ module ElaineCrud
     def create
       @record = crud_model.new(record_params)
       
+      # Ensure parent relationship is maintained
+      populate_parent_relationships(@record) if @record.errors.any?
+      
       if @record.save
-        redirect_to polymorphic_path(@record), notice: "#{crud_model.name} was successfully created."
+        # Redirect back to filtered view if came from parent context
+        redirect_to redirect_after_create_path, notice: "#{crud_model.name} was successfully created."
       else
         @model_name = crud_model.name
         render 'elaine_crud/base/new', status: :unprocessable_entity
@@ -418,6 +486,32 @@ module ElaineCrud
       render_field_display(record, field_name) # Placeholder
     end
     
+    # Instance method version of determine_display_field_for_model
+    # @param model_class [Class] The ActiveRecord model class
+    # @return [Symbol] The field to use for display
+    def determine_display_field_for_model(model_class)
+      # Common field names for display, in order of preference
+      display_candidates = [:name, :title, :display_name, :full_name, :label, :description]
+      
+      # Check which columns exist
+      column_names = model_class.column_names.map(&:to_sym)
+      
+      # Return the first matching candidate
+      display_field = display_candidates.find { |candidate| column_names.include?(candidate) }
+      
+      # If none found, use the first string/text column that's not id, created_at, updated_at
+      unless display_field
+        string_columns = model_class.columns.select do |col|
+          [:string, :text].include?(col.type) && 
+          !%w[id created_at updated_at].include?(col.name)
+        end
+        display_field = string_columns.first&.name&.to_sym
+      end
+      
+      # Final fallback to :id
+      display_field || :id
+    end
+    
 
     
     private
@@ -432,8 +526,11 @@ module ElaineCrud
     def fetch_records
       records = crud_model.all
       
-      # Include belongs_to relationships to avoid N+1 queries
-      includes_list = get_belongs_to_includes
+      # Apply parent filtering for has_many relationships
+      records = apply_has_many_filtering(records)
+      
+      # Include all relationships to avoid N+1 queries
+      includes_list = get_all_relationship_includes
       records = records.includes(includes_list) if includes_list.any?
       
       apply_sorting(records)
@@ -513,8 +610,10 @@ module ElaineCrud
     
     # Determine which columns to display
     def determine_columns
-      # Get all potential columns (including id now)
-      all_columns = crud_model.column_names
+      # Get all potential columns (database columns + configured virtual fields)
+      db_columns = crud_model.column_names
+      virtual_fields = configured_virtual_fields
+      all_columns = (db_columns + virtual_fields).uniq
       
       # Filter columns based on field configurations and new visibility rules
       all_columns.select do |col|
@@ -526,11 +625,32 @@ module ElaineCrud
         elsif field_config&.visible == true
           # Explicitly shown via field configuration (even if it ends with '_at')
           true
+        elsif virtual_fields.include?(col)
+          # Virtual fields are shown if configured (like has_many relationships)
+          true
         else
-          # Default behavior: hide columns ending with '_at', show everything else
+          # Default behavior for DB columns: hide columns ending with '_at', show everything else
           !col.end_with?('_at')
         end
       end
+    end
+    
+    # Get list of configured virtual fields (non-database columns)
+    # @return [Array<String>] List of configured virtual field names
+    def configured_virtual_fields
+      return [] unless field_configurations
+      
+      virtual_fields = []
+      field_configurations.each do |field_name, config|
+        field_name_str = field_name.to_s
+        
+        # Include if it's not a database column but is configured
+        unless crud_model.column_names.include?(field_name_str)
+          virtual_fields << field_name_str
+        end
+      end
+      
+      virtual_fields
     end
     
     # Apply default values to a new record based on field configurations
@@ -543,6 +663,131 @@ module ElaineCrud
       return record # Placeholder
     end
     
+    # Apply filtering based on parent relationship parameters
+    def apply_has_many_filtering(records)
+      parent_filters = detect_parent_filters
+      
+      parent_filters.each do |parent_field, parent_id|
+        next unless parent_id.present?
+        
+        # Validate that this is a legitimate foreign key
+        if valid_parent_filter?(parent_field)
+          records = records.where(parent_field => parent_id)
+          
+          # Set instance variables for UI context
+          set_parent_context(parent_field, parent_id)
+        end
+      end
+      
+      records
+    end
+
+    # Detect parent filter parameters from URL
+    def detect_parent_filters
+      parent_filters = {}
+      
+      # Look for foreign key parameters in the URL
+      crud_model.reflections.each do |name, reflection|
+        next unless reflection.is_a?(ActiveRecord::Reflection::BelongsToReflection)
+        
+        foreign_key = reflection.foreign_key.to_sym
+        param_value = params[foreign_key]
+        
+        if param_value.present?
+          parent_filters[foreign_key] = param_value
+        end
+      end
+      
+      parent_filters
+    end
+
+    # Validate that the parent filter is legitimate
+    def valid_parent_filter?(field_name)
+      crud_model.column_names.include?(field_name.to_s) &&
+      field_name.to_s.end_with?('_id')
+    end
+
+    # Set context for UI display
+    def set_parent_context(parent_field, parent_id)
+      reflection = find_reflection_by_foreign_key(parent_field)
+      return unless reflection
+      
+      begin
+        parent_record = reflection.klass.find(parent_id)
+        @parent_context = {
+          record: parent_record,
+          relationship_name: reflection.name,
+          foreign_key: parent_field,
+          model_class: reflection.klass
+        }
+      rescue ActiveRecord::RecordNotFound
+        @parent_context = {
+          error: "#{reflection.klass.name} with ID #{parent_id} not found",
+          foreign_key: parent_field,
+          model_class: reflection.klass
+        }
+      end
+    end
+
+    # Find reflection by foreign key name
+    def find_reflection_by_foreign_key(foreign_key)
+      crud_model.reflections.values.find do |reflection|
+        reflection.is_a?(ActiveRecord::Reflection::BelongsToReflection) &&
+        reflection.foreign_key.to_sym == foreign_key.to_sym
+      end
+    end
+
+    # Get list of associations to include for avoiding N+1 queries  
+    def get_all_relationship_includes
+      return [] unless crud_model
+      
+      includes = []
+      
+      # Include belongs_to relationships (existing logic)
+      includes += get_belongs_to_includes
+      
+      # Include has_many relationships that are displayed
+      includes += get_has_many_includes
+      
+      includes.uniq
+    end
+
+    # Get has_many relationships that need to be included
+    def get_has_many_includes
+      includes = []
+      
+      crud_model.reflections.each do |name, reflection|
+        next unless reflection.is_a?(ActiveRecord::Reflection::HasManyReflection)
+        
+        # Include if this relationship is displayed in columns or configured
+        if determine_columns.include?(name) || field_configured?(name.to_sym)
+          includes << name.to_sym
+        end
+      end
+      
+      includes
+    end
+
+    # Populate parent relationships from URL parameters
+    def populate_parent_relationships(record)
+      detect_parent_filters.each do |foreign_key, parent_id|
+        if valid_parent_filter?(foreign_key) && record.public_send(foreign_key).blank?
+          record.public_send("#{foreign_key}=", parent_id)
+        end
+      end
+    end
+
+    # Determine redirect path after create based on context
+    def redirect_after_create_path
+      if @parent_context
+        # Redirect back to filtered index view
+        url_for(action: :index, @parent_context[:foreign_key] => @parent_context[:record].id)
+      else
+        # Standard redirect to show page
+        polymorphic_path(@record)
+      end
+    end
+
     # Debug method to help troubleshoot configuration issues
     # Call this in your controller in development to see the configuration
     def debug_configuration

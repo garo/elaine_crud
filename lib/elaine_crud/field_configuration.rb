@@ -6,7 +6,7 @@ module ElaineCrud
   class FieldConfiguration
     attr_accessor :field_name, :title, :description, :readonly, :default_value,
                   :display_callback, :edit_callback, :options, :foreign_key_config,
-                  :visible, :grid_column_span
+                  :has_many_config, :visible, :grid_column_span
 
     def initialize(field_name, **options)
       @field_name = field_name
@@ -20,6 +20,7 @@ module ElaineCrud
       @edit_callback = options.fetch(:edit_as, nil)
       @options = options.fetch(:options, nil)
       @foreign_key_config = options.fetch(:foreign_key, nil)
+      @has_many_config = options.fetch(:has_many, nil)
       @visible = options.fetch(:visible, nil)
       @grid_column_span = options.fetch(:grid_column_span, nil)
     end
@@ -65,7 +66,10 @@ module ElaineCrud
       @foreign_key_config = config
     end
 
-
+    def has_many(**config)
+      return @has_many_config if config.empty?
+      @has_many_config = config
+    end
 
     def visible(value = nil)
       return @visible if value.nil?
@@ -84,6 +88,10 @@ module ElaineCrud
 
     def has_foreign_key?
       @foreign_key_config.present?
+    end
+
+    def has_has_many?
+      @has_many_config.present?
     end
 
     def has_custom_display?
@@ -247,6 +255,66 @@ module ElaineCrud
       when :datetime, :timestamp then :datetime_local_field
       else :text_field
       end
+    end
+
+    # Get options for has_many relationship display
+    def has_many_related_records(controller_instance)
+      return [] unless has_has_many?
+      
+      model_class = @has_many_config[:model]
+      foreign_key = @has_many_config[:foreign_key]
+      
+      # This would be called from a parent record context
+      parent_record = controller_instance.instance_variable_get(:@record)
+      return [] unless parent_record
+      
+      related_records = parent_record.public_send(@field_name)
+      
+      # Apply scope if specified
+      if @has_many_config[:scope]
+        related_records = related_records.instance_eval(&@has_many_config[:scope])
+      end
+      
+      related_records
+    end
+
+    # Get display value for has_many relationship
+    def render_has_many_display(record, controller_instance)
+      return "" unless has_has_many?
+      
+      related_records = record.public_send(@field_name)
+      
+      if @has_many_config[:show_count]
+        count = related_records.count
+        
+        if @has_many_config[:max_preview_items] && @has_many_config[:max_preview_items] > 0
+          preview_records = related_records.limit(@has_many_config[:max_preview_items])
+          display_field = @has_many_config[:display] || :id
+          
+          preview_text = preview_records.map do |rel_record|
+            begin
+              if display_field.is_a?(Proc)
+                display_field.call(rel_record)
+              else
+                result = rel_record.public_send(display_field)
+                result || "N/A"
+              end
+            rescue => e
+              Rails.logger.error "ElaineCrud: Error calling #{display_field} on #{rel_record.class.name}##{rel_record.id}: #{e.message}"
+              "Error"
+            end
+          end.join(", ")
+          
+          "#{count} items#{count > 0 ? ": #{preview_text}" : ""}"
+        else
+          "#{count} items"
+        end
+      else
+        related_records.count.to_s
+      end
+    rescue => e
+      Rails.logger.error "ElaineCrud: Error rendering has_many display: #{e.message}"
+      "Error loading relationships"
     end
   end
 end

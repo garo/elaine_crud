@@ -32,6 +32,11 @@ module ElaineCrud
     def display_field_value(record, field_name)
       config = controller.field_config_for(field_name)
       
+      # Handle has_many relationships
+      if config&.has_has_many? || is_has_many_relationship?(record, field_name)
+        return display_has_many_value(record, field_name, config)
+      end
+      
       # If field has custom display configuration, use it
       if config&.has_custom_display?
         config.render_display_value(record, controller)
@@ -84,6 +89,49 @@ module ElaineCrud
       else
         foreign_key_value.to_s
       end
+    end
+
+    # Display has_many relationship value
+    # @param record [ActiveRecord::Base] The record to display
+    # @param field_name [Symbol] The field name
+    # @param config [FieldConfiguration] The field configuration
+    # @return [String] The formatted has_many value
+    def display_has_many_value(record, field_name, config)
+      if config&.has_has_many?
+        # Use configuration to render
+        display_text = config.render_has_many_display(record, controller)
+        foreign_key = config.has_many_config[:foreign_key]
+        related_model_controller = config.has_many_config[:model].name.underscore.pluralize
+        
+        link_to display_text, 
+                url_for(controller: related_model_controller, action: :index, foreign_key => record.id),
+                class: "text-blue-600 hover:text-blue-800 underline"
+      else
+        # Fallback for auto-detected has_many
+        related_records = record.public_send(field_name)
+        count = related_records.respond_to?(:count) ? related_records.count : 0
+        
+        if count > 0
+          related_model = field_name.to_s.classify
+          controller_name = field_name.to_s
+          foreign_key = "#{record.class.name.underscore}_id"
+          
+          link_to "#{count} #{field_name.to_s.humanize.downcase}",
+                  url_for(controller: controller_name, action: :index, foreign_key => record.id),
+                  class: "text-blue-600 hover:text-blue-800 underline"
+        else
+          content_tag(:span, "No #{field_name.to_s.humanize.downcase}", class: 'text-gray-400')
+        end
+      end
+    rescue => e
+      Rails.logger.error "ElaineCrud: Error rendering has_many field #{field_name}: #{e.message}"
+      content_tag(:span, "Error loading relationship", class: 'text-red-400')
+    end
+
+    # Check if field is a has_many relationship
+    def is_has_many_relationship?(record, field_name)
+      reflection = record.class.reflections[field_name.to_s]
+      reflection&.is_a?(ActiveRecord::Reflection::HasManyReflection)
     end
     
     # Generate a human-readable title for the model
