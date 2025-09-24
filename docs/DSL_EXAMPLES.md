@@ -130,8 +130,9 @@ class AudienceController < ElaineCrud::BaseController
 end
 ```
 
-Then create the partial file `app/views/audience/_audience_query_builder.html.erb`:
-```
+### Partial Template Example
+
+Then create the partial file `app/views/audience_browser/_audience_query_builder.html.erb`:
 
 ## Read-Only Fields with Defaults
 

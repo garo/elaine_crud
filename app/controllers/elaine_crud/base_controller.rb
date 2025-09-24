@@ -14,7 +14,7 @@ module ElaineCrud
     protect_from_forgery with: :exception
     # No layout specified - host app controllers should set their own layout
     
-    class_attribute :crud_model, :permitted_attributes, :column_configurations, :field_configurations, :default_sort_column, :default_sort_direction
+    class_attribute :crud_model, :permitted_attributes, :column_configurations, :field_configurations, :default_sort_column, :default_sort_direction, :disable_turbo_frames
     
     # DSL methods for configuration
     class << self
@@ -104,6 +104,12 @@ module ElaineCrud
       def default_sort(column: :id, direction: :asc)
         self.default_sort_column = column
         self.default_sort_direction = direction
+      end
+      
+      # Disable Turbo Frame functionality for this controller
+      # When disabled, edit links will navigate to full page instead of inline editing
+      def disable_turbo
+        self.disable_turbo_frames = true
       end
       
       # Automatically configure foreign key fields based on belongs_to relationships
@@ -288,8 +294,11 @@ module ElaineCrud
       @model_name = crud_model.name
       @columns = determine_columns
       
-      # For Turbo Frame requests, return just the edit row partial
-      if turbo_frame_request?
+      # If Turbo is disabled, always render the full edit page
+      if turbo_disabled?
+        render 'elaine_crud/base/edit'
+      elsif turbo_frame_request?
+        # For Turbo Frame requests, return just the edit row partial
         render partial: 'elaine_crud/base/edit_row', locals: { record: @record, columns: @columns }
       else
         # For direct access, render the full edit page showing all records with this one in edit mode
@@ -444,6 +453,12 @@ module ElaineCrud
     # @return [Boolean] True if field is readonly
     def field_readonly?(field_name)
       field_config_for(field_name)&.readonly || false
+    end
+    
+    # Check if Turbo frames are disabled for this controller
+    # @return [Boolean] True if Turbo frames are disabled
+    def turbo_disabled?
+      disable_turbo_frames == true
     end
     
     # Render display value for a field

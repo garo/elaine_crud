@@ -1,5 +1,9 @@
-<%# View mode row wrapped in turbo-frame for seamless inline editing %>
-<turbo-frame id="record_<%= record.id %>">
+<%# View mode row wrapped in turbo-frame for seamless inline editing (unless disabled) %>
+<% if controller.respond_to?(:turbo_disabled?) && controller.turbo_disabled? %>
+  <div class="record-row" id="record_<%= record.id %>">
+<% else %>
+  <turbo-frame id="record_<%= record.id %>">
+<% end %>
   <%# Calculate layout for this record %>
   <% record_layout = calculate_layout(record, columns.map(&:to_sym)) %>
   
@@ -23,7 +27,8 @@
           <div class="flex space-x-2">
             <%= link_to "Edit", 
                 url_for(action: :edit, id: record.id), 
-                class: "text-green-600 hover:text-green-900" %>
+                class: "text-green-600 hover:text-green-900",
+                data: (controller.respond_to?(:turbo_disabled?) && controller.turbo_disabled?) ? { turbo: false } : {} %>
             <%= link_to "Delete", 
                 url_for(action: :destroy, id: record.id), 
                 method: :delete,
@@ -34,4 +39,8 @@
       <% end %>
     <% end %>
   </div>
-</turbo-frame>
+<% if controller.respond_to?(:turbo_disabled?) && controller.turbo_disabled? %>
+  </div>
+<% else %>
+  </turbo-frame>
+<% end %>
