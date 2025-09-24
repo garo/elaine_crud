@@ -108,6 +108,31 @@ class TransactionController < ElaineCrud::BaseController
 end
 ```
 
+## Custom Partial Rendering
+
+```ruby
+class AudienceController < ElaineCrud::BaseController
+  model Audience
+  permit_params :name, :audience_query, :state
+  
+  # Use a custom partial for complex field rendering
+  field :audience_query do |f|
+    f.title "Audience Query"
+    f.description "Build your audience targeting criteria using the visual query builder"
+    f.edit_partial "audience_query_builder"
+  end
+  
+  # Hash-style partial configuration
+  field :rich_content,
+    title: "Rich Content Editor",
+    description: "WYSIWYG editor for rich text content",
+    edit_partial: "shared/rich_text_editor"
+end
+```
+
+Then create the partial file `app/views/audience/_audience_query_builder.html.erb`:
+```
+
 ## Read-Only Fields with Defaults
 
 ```ruby
@@ -254,6 +279,7 @@ end
 | `default_value` | Value/Proc | Default for new records | `-> { Date.current }` |
 | `display_as` | Symbol/Proc | Custom display rendering | `:format_currency` |
 | `edit_as` | Symbol/Proc | Custom form field rendering | `{ |v| email_field(...) }` |
+| `edit_partial` | String | Custom partial for field rendering | `"audience_query_builder"` |
 | `options` | Array/Hash | Dropdown options | `["option1", "option2"]` |
 | `foreign_key` | Hash | Foreign key configuration | `{ model: Company, display: :name }` |
 

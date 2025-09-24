@@ -176,6 +176,9 @@ module ElaineCrud
       if field_readonly?(field_name)
         content_tag(:div, display_field_value(record, field_name), 
                    class: "px-3 py-2 bg-gray-100 border border-gray-500 text-gray-600")
+      elsif config&.has_edit_partial?
+        # Render using partial
+        render_partial_edit_field(config, record, form, field_name)
       elsif config&.has_custom_edit?
         # Render using custom edit callback
         render_custom_edit_field(config, record, form)
@@ -214,6 +217,37 @@ module ElaineCrud
         form.number_field(field_name, class: field_class)
       else
         form.text_field(field_name, class: field_class)
+      end
+    end
+
+    # Render partial edit field using configured partial
+    # @param config [FieldConfiguration] The field configuration
+    # @param record [ActiveRecord::Base] The record
+    # @param form [ActionView::Helpers::FormBuilder] The form builder
+    # @param field_name [Symbol] The field name
+    # @return [String] HTML-safe form field
+    def render_partial_edit_field(config, record, form, field_name)
+      field_value = record.public_send(field_name)
+      
+      begin
+        render partial: config.edit_partial, locals: {
+          form: form,
+          record: record,
+          field_name: field_name,
+          field_value: field_value,
+          config: config
+        }
+      rescue => e
+        # Graceful error handling - show error in development
+        if Rails.env.development?
+          content_tag(:div, class: "text-red-500 text-xs border border-red-300 p-2 bg-red-50") do
+            concat(content_tag(:strong, "Partial Error: "))
+            concat("Could not render partial '#{config.edit_partial}': #{e.message}")
+          end
+        else
+          # Fallback to default form field in production
+          render_default_form_field(form, record, field_name)
+        end
       end
     end
 

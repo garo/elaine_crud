@@ -5,7 +5,7 @@ module ElaineCrud
   # Supports both hash-style and block-style DSL configuration
   class FieldConfiguration
     attr_accessor :field_name, :title, :description, :readonly, :default_value,
-                  :display_callback, :edit_callback, :options, :foreign_key_config,
+                  :display_callback, :edit_callback, :edit_partial, :options, :foreign_key_config,
                   :has_many_config, :visible, :grid_column_span
 
     def initialize(field_name, **options)
@@ -18,6 +18,7 @@ module ElaineCrud
       @default_value = options.fetch(:default_value, nil)
       @display_callback = options.fetch(:display_as, nil)
       @edit_callback = options.fetch(:edit_as, nil)
+      @edit_partial = options.fetch(:edit_partial, nil)
       @options = options.fetch(:options, nil)
       @foreign_key_config = options.fetch(:foreign_key, nil)
       @has_many_config = options.fetch(:has_many, nil)
@@ -54,6 +55,11 @@ module ElaineCrud
     def edit_as(callback = nil, &block)
       return @edit_callback if callback.nil? && block.nil?
       @edit_callback = callback || block
+    end
+
+    def edit_partial(partial_path = nil)
+      return @edit_partial if partial_path.nil?
+      @edit_partial = partial_path
     end
 
     def options(list = nil)
@@ -100,6 +106,10 @@ module ElaineCrud
 
     def has_custom_edit?
       @edit_callback.present?
+    end
+
+    def has_edit_partial?
+      @edit_partial.present?
     end
 
     # Method to execute display callback
