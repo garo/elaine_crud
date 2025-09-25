@@ -9,6 +9,11 @@ module ElaineCrud
     # @param column [String] The column name to display
     # @return [String] The formatted value
     def display_column_value(record, column)
+      # Handle virtual fields that don't exist on the model
+      unless record.respond_to?(column)
+        return content_tag(:span, 'Virtual field', class: 'text-gray-400')
+      end
+      
       value = record.public_send(column)
       
       case value
@@ -181,7 +186,7 @@ module ElaineCrud
         render_partial_edit_field(config, record, form, field_name)
       elsif config&.has_custom_edit?
         # Render using custom edit callback
-        render_custom_edit_field(config, record, form)
+        render_custom_edit_field(config, record, form, self)
       elsif config&.has_options?
         # Render options dropdown
         render_options_field(form, field_name, config)
@@ -255,12 +260,12 @@ module ElaineCrud
     # @param config [FieldConfiguration] The field configuration
     # @param record [ActiveRecord::Base] The record
     # @param form [ActionView::Helpers::FormBuilder] The form builder
+    # @param view_context [ActionView::Base] The view context
     # @return [String] HTML-safe form field
-    def render_custom_edit_field(config, record, form)
+    def render_custom_edit_field(config, record, form, view_context = nil)
       field_value = record.public_send(config.field_name)
       
-      case config.edit_callback
-      when Symbol
+      if config.edit_callback.is_a?(Symbol)
         # Call method on controller instance
         if controller.respond_to?(config.edit_callback, true)
           controller.send(config.edit_callback, field_value, record, form)
@@ -268,12 +273,9 @@ module ElaineCrud
           # Fallback to default if method not found
           render_default_form_field(form, record, config.field_name)
         end
-      when Proc
-        # Call proc with field value, record, and form
-        config.edit_callback.call(field_value, record, form)
       else
-        # Fallback to default
-        render_default_form_field(form, record, config.field_name)
+        # Use the FieldConfiguration's render method which handles view context
+        config.render_edit_field(record, controller, form, view_context)
       end
     rescue => e
       # Graceful error handling - show error in development

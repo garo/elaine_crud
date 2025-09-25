@@ -32,7 +32,10 @@
             <%= link_to "Delete", 
                 url_for(action: :destroy, id: record.id), 
                 method: :delete,
-                data: { confirm: "Are you sure?" },
+                data: { 
+                  confirm: "Are you sure?",
+                  turbo_method: :delete
+                },
                 class: "text-red-600 hover:text-red-900" %>
           </div>
         </div>

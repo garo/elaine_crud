@@ -114,7 +114,12 @@ module ElaineCrud
 
     # Method to execute display callback
     def render_display_value(record, controller_instance)
-      field_value = record.public_send(@field_name)
+      # For virtual fields (those that don't exist on the model), use nil as field_value
+      field_value = if record.respond_to?(@field_name)
+                     record.public_send(@field_name)
+                   else
+                     nil
+                   end
       
       case @display_callback
       when Symbol
@@ -126,7 +131,8 @@ module ElaineCrud
         end
       when Proc
         # Call proc with field value and record
-        result = @display_callback.call(field_value, record)
+        # Execute the lambda with the controller that has access to helpers
+        result = controller_instance.instance_exec(field_value, record, &@display_callback)
       else
         raise ArgumentError, "Display callback must be a Symbol or Proc, got #{@display_callback.class.name}"
       end
@@ -136,14 +142,14 @@ module ElaineCrud
     rescue => e
       # Graceful error handling - show the error in development but fallback in production
       if Rails.env.development?
-        controller_instance.content_tag(:span, "Error: #{e.message}", class: "text-red-500 text-xs")
+        %Q{<span class="text-red-500 text-xs">Error: #{e.message}</span>}.html_safe
       else
         field_value.to_s.html_safe
       end
     end
 
     # Method to execute edit callback  
-    def render_edit_field(record, controller_instance, form_builder = nil)
+    def render_edit_field(record, controller_instance, form_builder = nil, view_context = nil)
       field_value = record.public_send(@field_name)
       
       case @edit_callback
@@ -156,7 +162,13 @@ module ElaineCrud
         end
       when Proc
         # Call proc with field value, record, and form builder
-        result = @edit_callback.call(field_value, record, form_builder)
+        if view_context
+          # Execute the lambda in the view context so it has access to helpers
+          result = view_context.instance_exec(field_value, record, form_builder, &@edit_callback)
+        else
+          # Fallback to direct call for backward compatibility
+          result = @edit_callback.call(field_value, record, form_builder)
+        end
       else
         raise ArgumentError, "Edit callback must be a Symbol or Proc, got #{@edit_callback.class.name}"
       end
@@ -166,7 +178,11 @@ module ElaineCrud
     rescue => e
       # Graceful error handling - show the error in development but fallback in production
       if Rails.env.development?
-        controller_instance.content_tag(:span, "Error: #{e.message}", class: "text-red-500 text-xs")
+        if view_context
+          view_context.content_tag(:span, "Error: #{e.message}", class: "text-red-500 text-xs")
+        else
+          %Q{<span class="text-red-500 text-xs">Error: #{e.message}</span>}.html_safe
+        end
       else
         # Fallback to basic text field
         if form_builder

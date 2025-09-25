@@ -11,6 +11,13 @@ module ElaineCrud
   class BaseController < ActionController::Base
     include ElaineCrud::SortingConcern
     
+    # Include view helpers so they're available in lambda contexts
+    include ActionView::Helpers::TagHelper
+    include ActionView::Helpers::UrlHelper
+    include ActionView::Helpers::TextHelper
+    include ActionView::Helpers::NumberHelper
+    include ActionView::Helpers::DateHelper
+    
     protect_from_forgery with: :exception
     # No layout specified - host app controllers should set their own layout
     
