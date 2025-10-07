@@ -37,4 +37,27 @@ class LibrariansController < ElaineCrud::BaseController
   end
 
   # Foreign key: library_id auto-configured
+
+  # Custom layout to give email and name fields more width
+  def calculate_layout_header(fields)
+    fields << "ROW-ACTIONS"
+
+    fields.map do |field_name|
+      width = case field_name.to_s
+              when 'name' then "18%"
+              when 'email' then "20%"
+              when 'role' then "12%"
+              when 'hire_date' then "13%"
+              when 'salary' then "12%"
+              when 'library_id' then "15%"
+              when 'ROW-ACTIONS' then "10%"
+              else "10%"
+              end
+
+      {
+        width: width,
+        field_name: field_name
+      }
+    end
+  end
 end

@@ -37,4 +37,28 @@ class MembersController < ElaineCrud::BaseController
 
   # Foreign key: library_id auto-configured
   # has_many :loans auto-shown
+
+  # Custom layout to give email and name fields more width
+  def calculate_layout_header(fields)
+    fields << "ROW-ACTIONS"
+
+    fields.map do |field_name|
+      width = case field_name.to_s
+              when 'name' then "18%"
+              when 'email' then "18%"
+              when 'phone' then "13%"
+              when 'membership_type' then "13%"
+              when 'joined_at' then "12%"
+              when 'active' then "8%"
+              when 'library_id' then "10%"
+              when 'ROW-ACTIONS' then "8%"
+              else "10%"
+              end
+
+      {
+        width: width,
+        field_name: field_name
+      }
+    end
+  end
 end

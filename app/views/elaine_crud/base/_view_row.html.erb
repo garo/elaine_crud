@@ -15,7 +15,7 @@
         <% colspan = column_config[:colspan] || 1 %>
         <% rowspan = column_config[:rowspan] || 1 %>
         
-        <div class="px-3 py-3 text-sm text-gray-900 border-r border-gray-200 last:border-r-0 <%= 'col-span-' + colspan.to_s if colspan > 1 %> <%= 'row-span-' + rowspan.to_s if rowspan > 1 %>">
+        <div class="px-3 py-3 text-sm text-gray-900 border-r border-gray-200 last:border-r-0 break-words <%= 'col-span-' + colspan.to_s if colspan > 1 %> <%= 'row-span-' + rowspan.to_s if rowspan > 1 %>">
           <%# TODO: Implement search/filter functionality for this column %>
           <%= display_field_value(record, field_name) %>
         </div>
