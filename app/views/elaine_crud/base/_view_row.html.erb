@@ -8,31 +8,34 @@
   <% record_layout = calculate_layout(record, columns.map(&:to_sym)) %>
   
   <%# Render layout rows %>
+  <% has_multiple_rows = record_layout.length > 1 %>
   <div class="grid" style="grid-template-columns: <%= header_layout.map { |config| config[:width] }.join(' ') %>;">
     <% record_layout.each_with_index do |layout_row, row_index| %>
+      <% is_last_row = row_index == record_layout.length - 1 %>
       <% layout_row.each do |column_config| %>
         <% field_name = column_config[:field_name] %>
         <% colspan = column_config[:colspan] || 1 %>
         <% rowspan = column_config[:rowspan] || 1 %>
-        
-        <div class="px-3 py-3 text-sm text-gray-900 border-r border-gray-200 last:border-r-0 break-words <%= 'col-span-' + colspan.to_s if colspan > 1 %> <%= 'row-span-' + rowspan.to_s if rowspan > 1 %>">
+        <% border_bottom_class = (has_multiple_rows && !is_last_row) ? 'border-b' : '' %>
+
+        <div class="px-3 py-3 text-sm text-gray-900 border-r border-gray-200 <%= border_bottom_class %> last:border-r-0 break-words <%= 'col-span-' + colspan.to_s if colspan > 1 %> <%= 'row-span-' + rowspan.to_s if rowspan > 1 %>">
           <%# TODO: Implement search/filter functionality for this column %>
           <%= display_field_value(record, field_name) %>
         </div>
       <% end %>
-      
+
       <%# Actions column (only on first row) %>
       <% if row_index == 0 %>
         <div class="px-3 py-3 text-sm text-gray-500 <%= 'row-span-' + record_layout.length.to_s if record_layout.length > 1 %>">
           <div class="flex space-x-2">
-            <%= link_to "Edit", 
-                url_for(action: :edit, id: record.id), 
+            <%= link_to "Edit",
+                url_for(action: :edit, id: record.id),
                 class: "text-green-600 hover:text-green-900",
                 data: (controller.respond_to?(:turbo_disabled?) && controller.turbo_disabled?) ? { turbo: false } : {} %>
-            <%= link_to "Delete", 
-                url_for(action: :destroy, id: record.id), 
+            <%= link_to "Delete",
+                url_for(action: :destroy, id: record.id),
                 method: :delete,
-                data: { 
+                data: {
                   confirm: "Are you sure?",
                   turbo_method: :delete
                 },
