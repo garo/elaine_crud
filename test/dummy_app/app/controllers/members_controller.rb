@@ -43,16 +43,17 @@ class MembersController < ElaineCrud::BaseController
     fields << "ROW-ACTIONS"
 
     fields.map do |field_name|
+      # Using minmax() allows columns to expand when content is too large
       width = case field_name.to_s
-              when 'name' then "18%"
-              when 'email' then "18%"
-              when 'phone' then "13%"
-              when 'membership_type' then "13%"
-              when 'joined_at' then "12%"
-              when 'active' then "8%"
-              when 'library_id' then "10%"
-              when 'ROW-ACTIONS' then "8%"
-              else "10%"
+              when 'name' then "minmax(140px, 1.8fr)"
+              when 'email' then "minmax(140px, 1.8fr)"
+              when 'phone' then "minmax(110px, 1.3fr)"
+              when 'membership_type' then "minmax(120px, 1.3fr)"
+              when 'joined_at' then "minmax(110px, 1.2fr)"
+              when 'active' then "minmax(80px, 0.8fr)"
+              when 'library_id' then "minmax(100px, 1fr)"
+              when 'ROW-ACTIONS' then "minmax(90px, 0.8fr)"
+              else "minmax(100px, 1fr)"
               end
 
       {

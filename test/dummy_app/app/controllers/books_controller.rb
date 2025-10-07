@@ -64,17 +64,18 @@ class BooksController < ElaineCrud::BaseController
     header_fields << "ROW-ACTIONS"
 
     header_fields.map do |field_name|
+      # Using minmax() allows columns to expand when content is too large
       width = case field_name.to_s
-              when 'title' then "14%"
-              when 'isbn' then "10%"
-              when 'author_id' then "11%"
-              when 'library_id' then "11%"
-              when 'publication_year' then "8%"
-              when 'pages' then "6%"
-              when 'price' then "7%"
-              when 'available' then "11%"
-              when 'ROW-ACTIONS' then "12%"
-              else "10%"
+              when 'title' then "minmax(120px, 1.4fr)"
+              when 'isbn' then "minmax(90px, 1fr)"
+              when 'author_id' then "minmax(100px, 1.1fr)"
+              when 'library_id' then "minmax(100px, 1.1fr)"
+              when 'publication_year' then "minmax(70px, 0.8fr)"
+              when 'pages' then "minmax(60px, 0.6fr)"
+              when 'price' then "minmax(70px, 0.7fr)"
+              when 'available' then "minmax(100px, 1.1fr)"
+              when 'ROW-ACTIONS' then "minmax(100px, 1.2fr)"
+              else "minmax(100px, 1fr)"
               end
 
       { width: width, field_name: field_name }

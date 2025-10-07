@@ -28,18 +28,17 @@ module ElaineCrud
     # @param fields [Array<Symbol>] Array of field names to include in layout
     # @return [Array<Hash>] Array of header config objects with width, field_name, and/or title
     #   Each object can contain:
-    #   - width: CSS width (required, e.g., "25%")
+    #   - width: CSS width (required, e.g., "minmax(100px, 1fr)" or "25%")
     #   - field_name: Symbol of field to display and enable sorting (optional)
     #   - title: Custom column title, overrides field title (optional)
     def calculate_layout_header(fields)
-      # Default implementation: equal distribution with field names for sorting
+      # Default implementation: flexible columns that can expand to fit content
+      # Using minmax() allows columns to grow beyond their base size when content requires it
       fields << "ROW-ACTIONS"
-      field_count = fields.length
-      percentage = (100.0 / field_count).round(1)
 
       fields.map do |field_name|
         {
-          width: "#{percentage}%",
+          width: "minmax(100px, 1fr)",
           field_name: field_name
         }
       end

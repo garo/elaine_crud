@@ -1,4 +1,4 @@
-<div class="container mx-auto px-4 py-8">
+<div class="px-4 py-8">
   <% if @parent_context %>
     <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
       <div class="flex">
@@ -12,13 +12,13 @@
             <% if @parent_context[:error] %>
               <strong>Error:</strong> <%= @parent_context[:error] %>
             <% else %>
-              Showing <%= @model_name.pluralize.downcase %> for 
-              <strong><%= @parent_context[:model_class].name %>:</strong> 
+              Showing <%= @model_name.pluralize.downcase %> for
+              <strong><%= @parent_context[:model_class].name %>:</strong>
               <%= @parent_context[:record].public_send(controller.send(:determine_display_field_for_model, @parent_context[:model_class])) %>
             <% end %>
-            
+
             <span class="ml-4">
-              <%= link_to "View All #{@model_name.pluralize}", 
+              <%= link_to "View All #{@model_name.pluralize}",
                   url_for(action: :index, @parent_context[:foreign_key] => nil),
                   class: "text-blue-600 underline hover:text-blue-800" %>
             </span>
@@ -30,49 +30,51 @@
 
   <div class="flex justify-between items-center mb-6">
     <h1 class="text-3xl font-bold text-gray-900"><%= @model_name.pluralize %></h1>
-    <%= link_to "New #{@model_name}", 
-        url_for(action: :new), 
+    <%= link_to "New #{@model_name}",
+        url_for(action: :new),
         class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" %>
   </div>
 
   <% if @records.any? %>
     <%# Calculate layout header to determine grid structure %>
     <% header_layout = calculate_layout_header(@columns.map(&:to_sym)) %>
-    
-    <div class="bg-white shadow-md overflow-hidden border border-gray-300">
-      <%# Header row with layout-based styling %>
-      <div class="grid border-b-2 border-gray-300 bg-gray-100" style="grid-template-columns: <%= header_layout.map { |config| config[:width] }.join(' ') %>;">
-        <% header_layout[0..-2].each do |header_config| %>
-          <div class="px-3 py-3 text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-200 last:border-r-0">
-            <% if header_column_sortable?(header_config) %>
-              <%= link_to sort_url_for(header_config[:field_name]), class: "flex items-center hover:text-blue-600 transition-colors duration-200" do %>
+
+    <div class="overflow-x-auto">
+      <div class="bg-white shadow-md border border-gray-300 inline-block min-w-full">
+        <%# Header row with layout-based styling %>
+        <div class="grid border-b-2 border-gray-300 bg-gray-100" style="grid-template-columns: <%= header_layout.map { |config| config[:width] }.join(' ') %>;">
+          <% header_layout[0..-2].each do |header_config| %>
+            <div class="px-3 py-3 text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-200 last:border-r-0">
+              <% if header_column_sortable?(header_config) %>
+                <%= link_to sort_url_for(header_config[:field_name]), class: "flex items-center hover:text-blue-600 transition-colors duration-200" do %>
+                  <span><%= header_column_title(header_config) %></span>
+                  <%= sort_indicator(header_config[:field_name]).html_safe %>
+                <% end %>
+              <% else %>
                 <span><%= header_column_title(header_config) %></span>
-                <%= sort_indicator(header_config[:field_name]).html_safe %>
               <% end %>
+            </div>
+          <% end %>
+          <div class="px-3 py-3 text-xs font-medium text-gray-700 uppercase tracking-wider">
+            Actions
+          </div>
+        </div>
+
+        <%# Records grid with table-like styling %>
+        <% @records.each_with_index do |record, index| %>
+          <% record_id = "record_#{record.id}" %>
+          <% row_bg_class = index.even? ? "bg-white" : "bg-gray-50" %>
+          <div class="record border-b border-gray-200 last:border-b-0 <%= row_bg_class %> hover:bg-blue-50" id="<%= record_id %>">
+            <% if @editing_record && @editing_record.id == record.id %>
+              <%# Render inline edit form for this record %>
+              <%= render 'elaine_crud/base/edit_row', record: @editing_record, columns: @columns %>
             <% else %>
-              <span><%= header_column_title(header_config) %></span>
+              <%# Render normal view row %>
+              <%= render 'elaine_crud/base/view_row', record: record, columns: @columns, header_layout: header_layout %>
             <% end %>
           </div>
         <% end %>
-        <div class="px-3 py-3 text-xs font-medium text-gray-700 uppercase tracking-wider">
-          Actions
-        </div>
       </div>
-
-      <%# Records grid with table-like styling %>
-      <% @records.each_with_index do |record, index| %>
-        <% record_id = "record_#{record.id}" %>
-        <% row_bg_class = index.even? ? "bg-white" : "bg-gray-50" %>
-        <div class="record border-b border-gray-200 last:border-b-0 <%= row_bg_class %> hover:bg-blue-50" id="<%= record_id %>">
-          <% if @editing_record && @editing_record.id == record.id %>
-            <%# Render inline edit form for this record %>
-            <%= render 'elaine_crud/base/edit_row', record: @editing_record, columns: @columns %>
-          <% else %>
-            <%# Render normal view row %>
-            <%= render 'elaine_crud/base/view_row', record: record, columns: @columns, header_layout: header_layout %>
-          <% end %>
-        </div>
-      <% end %>
     </div>
   <% else %>
     <div class="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">

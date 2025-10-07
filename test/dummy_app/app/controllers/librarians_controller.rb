@@ -43,15 +43,13 @@ class LibrariansController < ElaineCrud::BaseController
     fields << "ROW-ACTIONS"
 
     fields.map do |field_name|
+      # Using minmax() allows columns to expand when content is too large
+      # First value is minimum width, 1fr allows flexible growth
       width = case field_name.to_s
-              when 'name' then "18%"
-              when 'email' then "20%"
-              when 'role' then "12%"
-              when 'hire_date' then "13%"
-              when 'salary' then "12%"
-              when 'library_id' then "15%"
-              when 'ROW-ACTIONS' then "10%"
-              else "10%"
+              when 'id' then "max-content"
+              when 'email' then "minmax(180px, 2fr)"
+              when 'ROW-ACTIONS' then "minmax(100px, 0.8fr)"
+              else "minmax(180px, 2fr)"
               end
 
       {
