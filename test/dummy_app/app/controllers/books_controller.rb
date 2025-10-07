@@ -31,4 +31,53 @@ class BooksController < ElaineCrud::BaseController
   # Automatically shows dropdowns in forms and names in index
 
   # has_many :loans automatically shown with count
+
+  # Custom two-row layout for better content display
+  def calculate_layout(content, fields)
+    # Row 1: All regular fields displayed normally (each takes 1 column)
+    # Row 2: Description spans most columns, with loans info at the end
+
+    row1 = [
+      { field_name: :title, colspan: 1, rowspan: 1 },
+      { field_name: :isbn, colspan: 1, rowspan: 1 },
+      { field_name: :author_id, colspan: 1, rowspan: 1 },
+      { field_name: :library_id, colspan: 1, rowspan: 1 },
+      { field_name: :publication_year, colspan: 1, rowspan: 1 },
+      { field_name: :pages, colspan: 1, rowspan: 1 },
+      { field_name: :price, colspan: 1, rowspan: 1 },
+      { field_name: :available, colspan: 1, rowspan: 1 }
+    ]
+
+    row2 = [
+      { field_name: :description, colspan: 6, rowspan: 1 },
+      { field_name: :loans, colspan: 2, rowspan: 1 }
+    ]
+
+    [row1, row2]
+  end
+
+  # Custom header layout - defines the grid column structure
+  # Header only shows fields from row 1, as row 2 fields span across those columns
+  def calculate_layout_header(fields)
+    # Only include fields that appear in row 1 (the actual column structure)
+    header_fields = [:title, :isbn, :author_id, :library_id, :publication_year, :pages, :price, :available]
+    header_fields << "ROW-ACTIONS"
+
+    header_fields.map do |field_name|
+      width = case field_name.to_s
+              when 'title' then "14%"
+              when 'isbn' then "10%"
+              when 'author_id' then "11%"
+              when 'library_id' then "11%"
+              when 'publication_year' then "8%"
+              when 'pages' then "6%"
+              when 'price' then "7%"
+              when 'available' then "11%"
+              when 'ROW-ACTIONS' then "12%"
+              else "10%"
+              end
+
+      { width: width, field_name: field_name }
+    end
+  end
 end
