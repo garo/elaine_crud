@@ -38,41 +38,39 @@
   <% if @records.any? %>
     <%# Calculate layout header to determine grid structure %>
     <% header_layout = calculate_layout_header(@columns.map(&:to_sym)) %>
+    <% grid_template = header_layout.map { |config| config[:width] }.join(' ') %>
 
     <div class="overflow-x-auto">
-      <div class="bg-white shadow-md border border-gray-300 inline-block min-w-full">
-        <%# Header row with layout-based styling %>
-        <div class="grid border-b-2 border-gray-300 bg-gray-100" style="grid-template-columns: <%= header_layout.map { |config| config[:width] }.join(' ') %>;">
-          <% header_layout[0..-2].each do |header_config| %>
-            <div class="px-3 py-3 text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-200 last:border-r-0">
-              <% if header_column_sortable?(header_config) %>
-                <%= link_to sort_url_for(header_config[:field_name]), class: "flex items-center hover:text-blue-600 transition-colors duration-200" do %>
-                  <span><%= header_column_title(header_config) %></span>
-                  <%= sort_indicator(header_config[:field_name]).html_safe %>
-                <% end %>
-              <% else %>
+      <%# Main grid container - grid template defined once here for entire table %>
+      <div class="bg-white shadow-md border border-gray-300 inline-block min-w-full grid" style="grid-template-columns: <%= grid_template %>;">
+        <%# Header row - no grid definition, inherits from parent %>
+        <% header_layout[0..-2].each do |header_config| %>
+          <div class="px-3 py-3 text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-b-2 border-gray-200 bg-gray-100">
+            <% if header_column_sortable?(header_config) %>
+              <%= link_to sort_url_for(header_config[:field_name]), class: "flex items-center hover:text-blue-600 transition-colors duration-200" do %>
                 <span><%= header_column_title(header_config) %></span>
+                <%= sort_indicator(header_config[:field_name]).html_safe %>
               <% end %>
-            </div>
-          <% end %>
-          <div class="px-3 py-3 text-xs font-medium text-gray-700 uppercase tracking-wider">
-            Actions
+            <% else %>
+              <span><%= header_column_title(header_config) %></span>
+            <% end %>
           </div>
+        <% end %>
+        <div class="px-3 py-3 text-xs font-medium text-gray-700 uppercase tracking-wider border-b-2 border-gray-200 bg-gray-100">
+          Actions
         </div>
 
-        <%# Records grid with table-like styling %>
+        <%# Records - each cell is a direct grid child %>
         <% @records.each_with_index do |record, index| %>
           <% record_id = "record_#{record.id}" %>
           <% row_bg_class = index.even? ? "bg-white" : "bg-gray-50" %>
-          <div class="record border-b border-gray-200 last:border-b-0 <%= row_bg_class %> hover:bg-blue-50" id="<%= record_id %>">
-            <% if @editing_record && @editing_record.id == record.id %>
-              <%# Render inline edit form for this record %>
-              <%= render 'elaine_crud/base/edit_row', record: @editing_record, columns: @columns %>
-            <% else %>
-              <%# Render normal view row %>
-              <%= render 'elaine_crud/base/view_row', record: record, columns: @columns, header_layout: header_layout %>
-            <% end %>
-          </div>
+          <% if @editing_record && @editing_record.id == record.id %>
+            <%# Render inline edit form for this record %>
+            <%= render 'elaine_crud/base/edit_row', record: @editing_record, columns: @columns, row_bg_class: row_bg_class, record_id: record_id %>
+          <% else %>
+            <%# Render normal view row %>
+            <%= render 'elaine_crud/base/view_row', record: record, columns: @columns, row_bg_class: row_bg_class, record_id: record_id %>
+          <% end %>
         <% end %>
       </div>
     </div>
