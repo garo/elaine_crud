@@ -2,7 +2,7 @@
   <div class="flex justify-between items-center mb-6">
     <h1 class="text-3xl font-bold text-gray-900">Edit <%= @model_name %> (ID: <%= @record.id %>)</h1>
     <%= link_to "Back to #{@model_name.pluralize}",
-        url_for(action: :index),
+        url_for(action: :index, page: params[:page], per_page: params[:per_page]),
         class: "text-gray-600 hover:text-gray-900" %>
   </div>
 

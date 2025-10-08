@@ -27,6 +27,7 @@ Gem::Specification.new do |spec|
 
   # Runtime dependencies
   spec.add_dependency 'rails', '>= 6.0'
+  spec.add_dependency 'kaminari', '~> 1.2'
 
   # Development dependencies
   spec.add_development_dependency 'rspec', '~> 3.0'

@@ -6,6 +6,11 @@ module ElaineCrud
   module RecordFetching
     extend ActiveSupport::Concern
 
+    included do
+      # Make determine_per_page available as a helper method in views
+      helper_method :determine_per_page
+    end
+
     private
 
     # Fetch all records for index view
@@ -21,7 +26,40 @@ module ElaineCrud
       includes_list = get_all_relationship_includes
       records = records.includes(includes_list) if includes_list.any?
 
-      apply_sorting(records)
+      # Apply sorting
+      records = apply_sorting(records)
+
+      # Apply pagination
+      apply_pagination(records)
+    end
+
+    # Apply pagination to the record set
+    # @param records [ActiveRecord::Relation] The records to paginate
+    # @return [ActiveRecord::Relation] The paginated records
+    def apply_pagination(records)
+      # Update session with per_page preference if provided
+      if session.present? && params[:per_page].present?
+        session[:elaine_crud_per_page] = params[:per_page].to_i
+      end
+
+      # Determine records per page
+      per_page = determine_per_page
+
+      # Apply Kaminari pagination
+      records.page(params[:page]).per(per_page)
+    end
+
+    # Determine how many records to show per page
+    # Priority: 1. URL param, 2. Session, 3. Default
+    # @return [Integer] Number of records per page
+    def determine_per_page
+      if params[:per_page].present?
+        params[:per_page].to_i
+      elsif session.present? && session[:elaine_crud_per_page].present?
+        session[:elaine_crud_per_page].to_i
+      else
+        25 # Default
+      end
     end
 
     # Find a single record by ID

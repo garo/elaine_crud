@@ -29,7 +29,12 @@
   <% end %>
 
   <div class="flex justify-between items-center mb-6">
-    <h1 class="text-3xl font-bold text-gray-900"><%= @model_name.pluralize %></h1>
+    <div class="flex items-center space-x-4">
+      <h1 class="text-3xl font-bold text-gray-900"><%= @model_name.pluralize %></h1>
+      <% if @records.respond_to?(:total_count) %>
+        <%= render 'elaine_crud/base/per_page_selector', per_page: determine_per_page %>
+      <% end %>
+    </div>
     <%= link_to "New #{@model_name}",
         url_for(action: :new),
         class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" %>
@@ -74,12 +79,17 @@
         <% end %>
       </div>
     </div>
+
+    <%# Pagination controls %>
+    <% if @records.respond_to?(:total_pages) %>
+      <%= render 'elaine_crud/base/pagination', records: @records %>
+    <% end %>
   <% else %>
     <div class="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
       <h3 class="text-lg font-medium text-gray-900 mb-2">No <%= @model_name.pluralize.downcase %> found</h3>
       <p class="text-gray-600 mb-4">Get started by creating your first <%= @model_name.downcase %>.</p>
-      <%= link_to "Create #{@model_name}", 
-          url_for(action: :new), 
+      <%= link_to "Create #{@model_name}",
+          url_for(action: :new),
           class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" %>
     </div>
   <% end %>

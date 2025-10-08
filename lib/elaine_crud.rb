@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'kaminari'
+
 require_relative 'elaine_crud/version'
 require_relative 'elaine_crud/engine'
 require_relative 'elaine_crud/field_configuration'

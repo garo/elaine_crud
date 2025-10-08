@@ -51,7 +51,7 @@
       <%= form.submit "Save Changes",
           class: "bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded shadow-md border border-green-700" %>
       <%= link_to "Cancel",
-          url_for(action: :index),
+          url_for(action: :index, page: params[:page], per_page: params[:per_page]),
           class: "bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-6 rounded shadow-md border-2 border-gray-400" %>
     </div>
   </div>

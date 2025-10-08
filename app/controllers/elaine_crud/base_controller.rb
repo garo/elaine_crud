@@ -112,7 +112,7 @@ module ElaineCrud
           render partial: 'elaine_crud/base/view_row', locals: { record: @record, columns: @columns, header_layout: header_layout }
         elsif params[:from_inline_edit]
           # Legacy inline edit mode (will be deprecated)
-          redirect_to "/#{controller_path}", notice: "#{crud_model.name} was successfully updated."
+          redirect_to url_for(action: :index, page: params[:page], per_page: params[:per_page]), notice: "#{crud_model.name} was successfully updated."
         else
           redirect_to polymorphic_path(@record), notice: "#{crud_model.name} was successfully updated."
         end
