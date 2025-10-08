@@ -30,6 +30,8 @@ Gem::Specification.new do |spec|
 
   # Development dependencies
   spec.add_development_dependency 'rspec', '~> 3.0'
+  spec.add_development_dependency 'rspec-rails', '~> 6.0'
+  spec.add_development_dependency 'capybara', '~> 3.0'
   spec.add_development_dependency 'sqlite3', '~> 2.1'
   spec.add_development_dependency 'puma', '~> 6.0'
 

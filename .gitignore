@@ -1,1 +1,3 @@
 test/dummy_app/log
+test/dummy_app/tmp/
+.rspec_status

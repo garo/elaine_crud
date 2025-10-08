@@ -557,13 +557,127 @@ Every default behavior can be overridden with simple DSL methods.
 
 ---
 
+## Running Integration Tests
+
+The demo app includes a comprehensive integration test suite that validates all CRUD operations, custom layouts, and features.
+
+### Test Setup
+
+The test suite uses:
+- **RSpec** - Testing framework
+- **Capybara** - Browser simulation for integration testing
+- **Database** - Automatically resets and seeds before tests
+
+### Running Tests
+
+```bash
+# Run all integration tests
+bundle exec rake spec
+
+# Run only integration tests
+bundle exec rake spec:integration
+
+# Run tests for a specific controller
+bundle exec rake spec:controller[libraries]
+bundle exec rake spec:controller[books]
+bundle exec rake spec:controller[members]
+bundle exec rake spec:controller[librarians]
+
+# Run a specific test file
+bundle exec rspec spec/integration/books_crud_spec.rb
+
+# Run tests with detailed output
+bundle exec rspec spec/integration --format documentation
+```
+
+### Test Coverage
+
+The integration test suite covers:
+
+#### CRUD Operations (all controllers)
+- ✅ Index page displays all records
+- ✅ Index page shows correct field values
+- ✅ Create new records via forms
+- ✅ Edit existing records
+- ✅ Delete records
+- ✅ Form validation and error handling
+
+#### Custom Layout Features
+- ✅ Multi-row layout (Books with description on second row)
+- ✅ Column spanning (colspan on description field)
+- ✅ Flexible grid columns with minmax()
+- ✅ Responsive horizontal scrolling
+- ✅ Grid borders and styling
+
+#### Field Display Customization
+- ✅ Currency formatting ($19.99)
+- ✅ Date formatting (January 15, 2024)
+- ✅ Boolean badges (✓ Available / ✗ Checked Out)
+- ✅ Email mailto links
+- ✅ Dropdown options (roles, membership types)
+
+#### Sorting and Filtering
+- ✅ Default sort order (ascending by name/title)
+- ✅ Sortable column headers with indicators
+- ✅ Has-many relationship counts
+- ✅ Relationship filtering
+
+### Test Files
+
+```
+spec/
+├── spec_helper.rb                    # RSpec configuration
+├── support/
+│   └── test_helpers.rb               # Helper methods for tests
+└── integration/
+    ├── libraries_crud_spec.rb        # Libraries CRUD tests
+    ├── books_crud_spec.rb            # Books CRUD tests (with multi-row layout)
+    ├── members_crud_spec.rb          # Members CRUD tests (with dropdowns)
+    ├── librarians_crud_spec.rb       # Librarians CRUD tests (with currency)
+    ├── layout_features_spec.rb       # Custom layout feature tests
+    └── sorting_and_filtering_spec.rb # Sorting and filtering tests
+```
+
+### Example Test Output
+
+```
+Libraries CRUD
+  Index page
+    ✓ displays all libraries
+    ✓ displays library details correctly
+    ✓ has New Library link
+  Creating a library
+    ✓ shows new library form
+    ✓ creates a new library successfully
+  Editing a library
+    ✓ shows edit library form
+    ✓ updates library successfully
+  Deleting a library
+    ✓ deletes library successfully
+
+Finished in 2.34 seconds (files took 1.2 seconds to load)
+8 examples, 0 failures
+```
+
+### Continuous Integration
+
+The test suite is designed to:
+- Reset the database to a clean state before each test run
+- Use database transactions to isolate tests
+- Verify all routes work without errors
+- Ensure data integrity after CRUD operations
+- Validate custom field displays and layouts
+
+---
+
 ## Next Steps
 
 1. **Explore the UI**: Click around and try all the features
-2. **Read the Code**: Check `test/dummy_app/app/controllers/` for examples
-3. **Modify Data**: Use the console to add your own records
-4. **Customize**: Try changing field configurations and see the results
-5. **Integrate**: Use this as a reference for your own ElaineCrud projects
+2. **Run the Tests**: Verify everything works with `bundle exec rake spec`
+3. **Read the Code**: Check `test/dummy_app/app/controllers/` for examples
+4. **Modify Data**: Use the console to add your own records
+5. **Customize**: Try changing field configurations and see the results
+6. **Integrate**: Use this as a reference for your own ElaineCrud projects
 
 ---
 
@@ -572,6 +686,7 @@ Every default behavior can be overridden with simple DSL methods.
 - **Main Documentation**: See `/docs` folder for detailed feature documentation
 - **API Reference**: `ELAINE_CRUD_API_DOCUMENTATION.md` in project root
 - **Source Code**: All controllers in `test/dummy_app/app/controllers/`
+- **Test Suite**: Integration tests in `spec/integration/`
 
 ---
 
