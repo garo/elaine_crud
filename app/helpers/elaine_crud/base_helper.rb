@@ -176,10 +176,14 @@ module ElaineCrud
     # @return [String] HTML-safe form field
     def render_form_field(form, record, field_name)
       config = controller.field_config_for(field_name)
-      
+
       # If field is readonly, show the display value instead of an input
       if field_readonly?(field_name)
-        content_tag(:div, display_field_value(record, field_name), 
+        content_tag(:div, display_field_value(record, field_name),
+                   class: "px-3 py-2 bg-gray-100 border border-gray-500 text-gray-600")
+      # has_many associations are readonly in edit forms - show display value
+      elsif config&.has_has_many?
+        content_tag(:div, display_field_value(record, field_name),
                    class: "px-3 py-2 bg-gray-100 border border-gray-500 text-gray-600")
       elsif config&.has_edit_partial?
         # Render using partial
