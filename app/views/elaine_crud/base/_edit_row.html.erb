@@ -1,7 +1,7 @@
 <%# Edit form wrapped in turbo-frame for seamless inline editing %>
 <turbo-frame id="record_<%= record.id %>">
   <div class="bg-blue-50 border-2 border-blue-400 p-4">
-  <%= form_with model: record, url: url_for(action: :update, id: record.id) do |form| %>
+  <%= form_with model: record, url: "/#{controller_path}/#{record.id}", method: :patch do |form| %>
     <%= hidden_field_tag :from_inline_edit, true %>
     
     <%# Calculate layout for this record %>
@@ -43,10 +43,10 @@
     
     <%# Action buttons at the bottom %>
     <div class="flex justify-end space-x-3 pt-6 border-t-2 border-blue-300 mt-6">
-      <%= form.submit "Save Changes", 
+      <%= form.submit "Save Changes",
           class: "bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded shadow-md border border-green-700" %>
-      <%= link_to "Cancel", 
-          url_for(action: :cancel_edit, id: record.id), 
+      <%= link_to "Cancel",
+          url_for(action: :index),
           class: "bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-6 rounded shadow-md border-2 border-gray-400" %>
     </div>
   <% end %>

@@ -30,11 +30,10 @@
         <div class="record border-b border-gray-200 last:border-b-0 <%= row_bg_class %> hover:bg-blue-50" id="<%= record_id %>">
           <% if record.id == @record.id %>
             <%# Render edit row for the record being edited %>
-            <%= render 'elaine_crud/base/edit_row', record: @record, columns: @columns %>
+            <%= render 'elaine_crud/base/edit_row', record: @record, columns: @columns, row_bg_class: row_bg_class, record_id: record_id %>
           <% else %>
             <%# Render normal view row %>
-            <% header_layout = calculate_layout_header(@columns.map(&:to_sym)) %>
-            <%= render 'elaine_crud/base/view_row', record: record, columns: @columns, header_layout: header_layout %>
+            <%= render 'elaine_crud/base/view_row', record: record, columns: @columns, row_bg_class: row_bg_class, record_id: record_id %>
           <% end %>
         </div>
       <% end %>
