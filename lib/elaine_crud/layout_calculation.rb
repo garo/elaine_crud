@@ -37,8 +37,15 @@ module ElaineCrud
       fields << "ROW-ACTIONS"
 
       fields.map do |field_name|
+        width = case field_name.to_s
+          when 'id' then "max-content"
+          when 'email' then "minmax(180px, 2fr)"
+          when 'ROW-ACTIONS' then "max-content"
+          else "minmax(100px, 1fr)"
+        end
+
         {
-          width: "minmax(100px, 1fr)",
+          width: width,
           field_name: field_name
         }
       end
