@@ -36,12 +36,17 @@ module ElaineCrud
     # @return [String] The formatted value
     def display_field_value(record, field_name)
       config = controller.field_config_for(field_name)
-      
+
       # Handle has_many relationships
       if config&.has_has_many? || is_has_many_relationship?(record, field_name)
         return display_has_many_value(record, field_name, config)
       end
-      
+
+      # Handle has_one relationships
+      if config&.has_has_one? || is_has_one_relationship?(record, field_name)
+        return display_has_one_value(record, field_name, config)
+      end
+
       # If field has custom display configuration, use it
       if config&.has_custom_display?
         config.render_display_value(record, controller)
@@ -133,6 +138,33 @@ module ElaineCrud
       content_tag(:span, "Error loading relationship", class: 'text-red-400')
     end
 
+    # Check if field is a has_one relationship
+    def is_has_one_relationship?(record, field_name)
+      reflection = record.class.reflections[field_name.to_s]
+      reflection&.is_a?(ActiveRecord::Reflection::HasOneReflection)
+    end
+
+    # Display has_one relationship value
+    def display_has_one_value(record, field_name, config)
+      if config&.has_has_one?
+        config.render_has_one_display(record, controller)
+      else
+        # Fallback for auto-detected has_one
+        related_record = record.public_send(field_name)
+
+        if related_record.nil?
+          content_tag(:span, '—', class: 'text-gray-400')
+        else
+          # Try to find a good display field
+          display_field = controller.send(:determine_display_field_for_model, related_record.class)
+          related_record.public_send(display_field).to_s
+        end
+      end
+    rescue => e
+      Rails.logger.error "ElaineCrud: Error rendering has_one field #{field_name}: #{e.message}"
+      content_tag(:span, "Error loading relationship", class: 'text-red-400')
+    end
+
     # Check if field is a has_many relationship
     def is_has_many_relationship?(record, field_name)
       reflection = record.class.reflections[field_name.to_s]
@@ -183,6 +215,10 @@ module ElaineCrud
                    class: "px-3 py-2 bg-gray-100 border border-gray-500 text-gray-600")
       # has_many associations are readonly in edit forms - show display value
       elsif config&.has_has_many?
+        content_tag(:div, display_field_value(record, field_name),
+                   class: "px-3 py-2 bg-gray-100 border border-gray-500 text-gray-600")
+      # has_one associations are readonly in edit forms - show display value
+      elsif config&.has_has_one?
         content_tag(:div, display_field_value(record, field_name),
                    class: "px-3 py-2 bg-gray-100 border border-gray-500 text-gray-600")
       elsif config&.has_edit_partial?

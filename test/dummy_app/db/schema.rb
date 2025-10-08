@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_01_01_000006) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_08_120747) do
   create_table "authors", force: :cascade do |t|
     t.string "name", null: false
     t.text "biography"
@@ -95,10 +95,20 @@ ActiveRecord::Schema[8.0].define(version: 2025_01_01_000006) do
     t.index ["membership_type"], name: "index_members_on_membership_type"
   end
 
+  create_table "profiles", force: :cascade do |t|
+    t.integer "member_id", null: false
+    t.text "bio"
+    t.string "avatar_url"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["member_id"], name: "index_profiles_on_member_id"
+  end
+
   add_foreign_key "books", "authors"
   add_foreign_key "books", "libraries"
   add_foreign_key "librarians", "libraries"
   add_foreign_key "loans", "books"
   add_foreign_key "loans", "members"
   add_foreign_key "members", "libraries"
+  add_foreign_key "profiles", "members"
 end

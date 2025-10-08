@@ -6,7 +6,7 @@ module ElaineCrud
   class FieldConfiguration
     attr_accessor :field_name, :title, :description, :readonly, :default_value,
                   :display_callback, :edit_callback, :edit_partial, :options, :foreign_key_config,
-                  :has_many_config, :visible, :grid_column_span
+                  :has_many_config, :has_one_config, :visible, :grid_column_span
 
     def initialize(field_name, **options)
       @field_name = field_name
@@ -22,6 +22,7 @@ module ElaineCrud
       @options = options.fetch(:options, nil)
       @foreign_key_config = options.fetch(:foreign_key, nil)
       @has_many_config = options.fetch(:has_many, nil)
+      @has_one_config = options.fetch(:has_one, nil)
       @visible = options.fetch(:visible, nil)
       @grid_column_span = options.fetch(:grid_column_span, nil)
     end
@@ -77,6 +78,11 @@ module ElaineCrud
       @has_many_config = config
     end
 
+    def has_one(**config)
+      return @has_one_config if config.empty?
+      @has_one_config = config
+    end
+
     def visible(value = nil)
       return @visible if value.nil?
       @visible = value
@@ -98,6 +104,10 @@ module ElaineCrud
 
     def has_has_many?
       @has_many_config.present?
+    end
+
+    def has_has_one?
+      @has_one_config.present?
     end
 
     def has_custom_display?
@@ -307,16 +317,16 @@ module ElaineCrud
     # Get display value for has_many relationship
     def render_has_many_display(record, controller_instance)
       return "" unless has_has_many?
-      
+
       related_records = record.public_send(@field_name)
-      
+
       if @has_many_config[:show_count]
         count = related_records.count
-        
+
         if @has_many_config[:max_preview_items] && @has_many_config[:max_preview_items] > 0
           preview_records = related_records.limit(@has_many_config[:max_preview_items])
           display_field = @has_many_config[:display] || :id
-          
+
           preview_text = preview_records.map do |rel_record|
             begin
               if display_field.is_a?(Proc)
@@ -330,7 +340,7 @@ module ElaineCrud
               "Error"
             end
           end.join(", ")
-          
+
           "#{count} items#{count > 0 ? ": #{preview_text}" : ""}"
         else
           "#{count} items"
@@ -341,6 +351,31 @@ module ElaineCrud
     rescue => e
       Rails.logger.error "ElaineCrud: Error rendering has_many display: #{e.message}"
       "Error loading relationships"
+    end
+
+    # Get display value for has_one relationship
+    def render_has_one_display(record, controller_instance)
+      return "" unless has_has_one?
+
+      related_record = record.public_send(@field_name)
+      return "—" if related_record.nil?
+
+      display_field = @has_one_config[:display] || :id
+
+      begin
+        if display_field.is_a?(Proc)
+          display_field.call(related_record)
+        else
+          result = related_record.public_send(display_field)
+          result || "N/A"
+        end
+      rescue => e
+        Rails.logger.error "ElaineCrud: Error calling #{display_field} on #{related_record.class.name}##{related_record.id}: #{e.message}"
+        "Error"
+      end
+    rescue => e
+      Rails.logger.error "ElaineCrud: Error rendering has_one display: #{e.message}"
+      "Error loading relationship"
     end
   end
 end

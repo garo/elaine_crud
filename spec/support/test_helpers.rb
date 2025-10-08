@@ -6,6 +6,7 @@ module TestHelpers
     # Delete in correct order to avoid foreign key constraints
     # Delete children first, then parents
     ActiveRecord::Base.connection.execute('DELETE FROM loans')
+    ActiveRecord::Base.connection.execute('DELETE FROM profiles')
     ActiveRecord::Base.connection.execute('DELETE FROM librarians')
     ActiveRecord::Base.connection.execute('DELETE FROM members')
     ActiveRecord::Base.connection.execute('DELETE FROM books')
@@ -14,6 +15,7 @@ module TestHelpers
 
     # Reset sequences
     ActiveRecord::Base.connection.execute("DELETE FROM sqlite_sequence WHERE name='loans'")
+    ActiveRecord::Base.connection.execute("DELETE FROM sqlite_sequence WHERE name='profiles'")
     ActiveRecord::Base.connection.execute("DELETE FROM sqlite_sequence WHERE name='librarians'")
     ActiveRecord::Base.connection.execute("DELETE FROM sqlite_sequence WHERE name='members'")
     ActiveRecord::Base.connection.execute("DELETE FROM sqlite_sequence WHERE name='books'")

@@ -1,6 +1,7 @@
 class Member < ApplicationRecord
   belongs_to :library
   has_many :loans, dependent: :destroy
+  has_one :profile, dependent: :destroy
 
   validates :name, presence: true
   validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }

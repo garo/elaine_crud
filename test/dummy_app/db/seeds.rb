@@ -1,6 +1,7 @@
 # Clear existing data
 puts "Clearing existing data..."
 Loan.destroy_all
+Profile.destroy_all
 Book.destroy_all
 Member.destroy_all
 Librarian.destroy_all
@@ -310,6 +311,25 @@ Librarian.create!(
   library: libraries[2]
 )
 
+puts "Creating profiles..."
+Profile.create!(
+  member: members[0], # Alice
+  bio: "Avid reader of classic literature and contemporary fiction. Member since 2020.",
+  avatar_url: "https://i.pravatar.cc/150?img=1"
+)
+
+Profile.create!(
+  member: members[1], # Bob
+  bio: "Science fiction enthusiast and occasional poetry reader.",
+  avatar_url: "https://i.pravatar.cc/150?img=12"
+)
+
+Profile.create!(
+  member: members[3], # David
+  bio: "Literary fiction lover with a special interest in international authors.",
+  avatar_url: "https://i.pravatar.cc/150?img=33"
+)
+
 puts "\n" + "="*60
 puts "Seed data created successfully!"
 puts "="*60
@@ -318,6 +338,7 @@ puts "  Libraries: #{Library.count}"
 puts "  Authors: #{Author.count}"
 puts "  Books: #{Book.count}"
 puts "  Members: #{Member.count}"
+puts "  Profiles: #{Profile.count}"
 puts "  Loans: #{Loan.count}"
 puts "  Librarians: #{Librarian.count}"
 puts "="*60

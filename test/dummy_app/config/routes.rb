@@ -11,4 +11,5 @@ Rails.application.routes.draw do
   resources :members
   resources :loans
   resources :librarians
+  resources :profiles
 end

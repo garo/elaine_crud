@@ -21,6 +21,8 @@ module ElaineCrud
         auto_configure_foreign_keys if model_class
         # Auto-configure has_many relationships
         auto_configure_has_many_relationships if model_class
+        # Auto-configure has_one relationships
+        auto_configure_has_one_relationships if model_class
         # Re-run permit_params to include foreign keys if it was called before model was set
         refresh_permitted_attributes
       end
@@ -148,6 +150,25 @@ module ElaineCrud
         end
       end
 
+      # Auto-configure has_one relationship display
+      def auto_configure_has_one_relationships
+        return unless crud_model
+
+        self.field_configurations ||= {}
+
+        # Find all has_one relationships
+        crud_model.reflections.each do |name, reflection|
+          next unless reflection.is_a?(ActiveRecord::Reflection::HasOneReflection)
+
+          # Skip if already manually configured
+          field_name = name.to_sym
+          next if field_configurations[field_name]
+
+          # Auto-configure this has_one field
+          auto_configure_has_one_field(reflection)
+        end
+      end
+
       # Configure has_many relationship display and behavior
       def has_many_relation(relation_name, **options, &block)
         self.field_configurations ||= {}
@@ -232,6 +253,28 @@ module ElaineCrud
             foreign_key: reflection.foreign_key,
             show_count: true,
             max_preview_items: 3
+          }
+        )
+
+        self.field_configurations[field_name] = config
+      end
+
+      # Auto-configure a single has_one relationship field
+      def auto_configure_has_one_field(reflection)
+        field_name = reflection.name.to_sym
+        related_model = reflection.klass
+
+        # Determine display field for related record
+        display_field = determine_display_field_for_model(related_model)
+
+        # Create field configuration for has_one
+        config = ElaineCrud::FieldConfiguration.new(
+          field_name,
+          title: reflection.name.to_s.humanize,
+          has_one: {
+            model: related_model,
+            display: display_field,
+            foreign_key: reflection.foreign_key
           }
         )
 
