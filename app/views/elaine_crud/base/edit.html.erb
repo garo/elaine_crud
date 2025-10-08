@@ -1,42 +1,43 @@
 <div class="w-full">
   <div class="flex justify-between items-center mb-6">
     <h1 class="text-3xl font-bold text-gray-900">Edit <%= @model_name %> (ID: <%= @record.id %>)</h1>
-    <%= link_to "Back to #{@model_name.pluralize}", 
-        url_for(action: :index), 
+    <%= link_to "Back to #{@model_name.pluralize}",
+        url_for(action: :index),
         class: "text-gray-600 hover:text-gray-900" %>
   </div>
 
   <% if @records.any? %>
-    <%# Calculate the maximum number of grid columns needed based on field spans %>
-    <% total_columns = @columns.sum { |column| field_grid_column_span(column.to_sym) } + 1 %>
-    
-    <div class="bg-white shadow-md overflow-hidden border border-gray-300">
-      <%# Header row with table-like styling %>
-      <div class="grid border-b-2 border-gray-300 bg-gray-100" style="grid-template-columns: repeat(<%= total_columns %>, minmax(0, 1fr));">
-        <% @columns.each do |column| %>
-          <div class="px-3 py-3 text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-gray-200 last:border-r-0 <%= field_grid_classes(column.to_sym) %>">
-            <%= field_title(column.to_sym) %>
+    <%# Calculate layout header to determine grid structure - same as index page %>
+    <% header_layout = calculate_layout_header(@columns.map(&:to_sym)) %>
+    <% grid_template = header_layout.map { |config| config[:width] }.join(' ') %>
+
+    <div class="overflow-x-auto">
+      <%# Main grid container - grid template defined once here for entire table %>
+      <div class="bg-white shadow-md border border-gray-300 inline-block min-w-full grid" style="grid-template-columns: <%= grid_template %>;">
+        <%# Header row - no grid definition, inherits from parent %>
+        <% header_layout[0..-2].each do |header_config| %>
+          <div class="px-3 py-3 text-xs font-medium text-gray-700 uppercase tracking-wider border-r border-b-2 border-gray-200 bg-gray-100">
+            <%= header_column_title(header_config) %>
           </div>
         <% end %>
-        <div class="px-3 py-3 text-xs font-medium text-gray-700 uppercase tracking-wider">
+        <div class="px-3 py-3 text-xs font-medium text-gray-700 uppercase tracking-wider border-b-2 border-gray-200 bg-gray-100">
           Actions
         </div>
-      </div>
 
-      <%# Records grid with table-like styling %>
-      <% @records.each_with_index do |record, index| %>
-        <% record_id = "record_#{record.id}" %>
-        <% row_bg_class = index.even? ? "bg-white" : "bg-gray-50" %>
-        <div class="record border-b border-gray-200 last:border-b-0 <%= row_bg_class %> hover:bg-blue-50" id="<%= record_id %>">
+        <%# Records - each cell is a direct grid child %>
+        <% @records.each_with_index do |record, index| %>
+          <% record_id = "record_#{record.id}" %>
+          <% row_bg_class = index.even? ? "bg-white" : "bg-gray-50" %>
+          <% is_last_record = index == @records.length - 1 %>
           <% if record.id == @record.id %>
             <%# Render edit row for the record being edited %>
-            <%= render 'elaine_crud/base/edit_row', record: @record, columns: @columns, row_bg_class: row_bg_class, record_id: record_id %>
+            <%= render 'elaine_crud/base/edit_row', record: @record, columns: @columns, row_bg_class: row_bg_class, record_id: record_id, is_last_record: is_last_record %>
           <% else %>
             <%# Render normal view row %>
-            <%= render 'elaine_crud/base/view_row', record: record, columns: @columns, row_bg_class: row_bg_class, record_id: record_id %>
+            <%= render 'elaine_crud/base/view_row', record: record, columns: @columns, row_bg_class: row_bg_class, record_id: record_id, is_last_record: is_last_record %>
           <% end %>
-        </div>
-      <% end %>
+        <% end %>
+      </div>
     </div>
   <% else %>
     <div class="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">

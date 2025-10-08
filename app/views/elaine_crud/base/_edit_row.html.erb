@@ -1,12 +1,17 @@
 <%# Edit form wrapped in turbo-frame for seamless inline editing %>
-<turbo-frame id="record_<%= record.id %>">
-  <div class="bg-blue-50 border-2 border-blue-400 p-4">
-  <%= form_with model: record, url: "/#{controller_path}/#{record.id}", method: :patch do |form| %>
-    <%= hidden_field_tag :from_inline_edit, true %>
-    
+<%# Calculate how many columns we have in the grid %>
+<% header_layout = calculate_layout_header(columns.map(&:to_sym)) %>
+<% total_columns = header_layout.length %>
+
+<%# Edit form spans all columns %>
+<%= form_with model: record, url: "/#{controller_path}/#{record.id}", method: :patch, class: "contents" do |form| %>
+  <%= hidden_field_tag :from_inline_edit, true %>
+
+  <%# Form content spanning all columns (including actions column) %>
+  <div class="bg-blue-50 border-2 border-blue-400 p-6 border-b <%= row_bg_class %>" style="grid-column: 1 / -1;" data-record-id="<%= record_id %>">
     <%# Calculate layout for this record %>
     <% record_layout = calculate_layout(record, columns.map(&:to_sym)) %>
-    
+
     <%# Render layout rows for editing %>
     <% record_layout.each_with_index do |layout_row, row_index| %>
       <%# Single CSS Grid container with synchronized column widths %>
@@ -15,7 +20,7 @@
           <% field_name = column_config[:field_name] %>
           <% colspan = column_config[:colspan] || 1 %>
           <% rowspan = column_config[:rowspan] || 1 %>
-          
+
           <%# Column 1: Field Name/Title %>
           <div class="text-sm font-medium text-gray-700 py-3 <%= 'border-b border-blue-200' unless col_index == layout_row.length - 1 %> <%= 'col-span-' + colspan.to_s if colspan > 1 %>">
             <%= field_title(field_name) %>
@@ -25,12 +30,12 @@
               </div>
             <% end %>
           </div>
-          
+
           <%# Column 2: Form Input %>
           <div class="py-2 <%= 'border-b border-blue-200' unless col_index == layout_row.length - 1 %> <%= 'col-span-' + colspan.to_s if colspan > 1 %>">
             <%= render_form_field(form, record, field_name) %>
           </div>
-          
+
           <%# Column 3: Field Description %>
           <div class="text-xs text-gray-500 py-3 <%= 'border-b border-blue-200' unless col_index == layout_row.length - 1 %> <%= 'col-span-' + colspan.to_s if colspan > 1 %>">
             <% if field_description(field_name).present? %>
@@ -40,7 +45,7 @@
         <% end %>
       </div>
     <% end %>
-    
+
     <%# Action buttons at the bottom %>
     <div class="flex justify-end space-x-3 pt-6 border-t-2 border-blue-300 mt-6">
       <%= form.submit "Save Changes",
@@ -49,6 +54,5 @@
           url_for(action: :index),
           class: "bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-6 rounded shadow-md border-2 border-gray-400" %>
     </div>
-  <% end %>
   </div>
-</turbo-frame>
+<% end %>
