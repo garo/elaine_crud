@@ -246,9 +246,18 @@ module ElaineCrud
     # @return [String] HTML-safe form field
     def render_default_form_field(form, record, field_name)
       column = record.class.columns.find { |c| c.name == field_name.to_s }
-      
+
       field_class = "block w-full border border-gray-500 focus:border-gray-700 text-sm bg-white px-3 py-2"
-      
+
+      # Check if this is a foreign key (integer field ending in _id with a belongs_to association)
+      if column&.type == :integer && field_name.to_s.end_with?('_id')
+        reflection = find_belongs_to_reflection_for_foreign_key(record.class, field_name)
+        if reflection
+          # Render as select box for foreign key
+          return render_auto_foreign_key_field(form, field_name, reflection)
+        end
+      end
+
       case column&.type
       when :text
         form.text_area(field_name, class: "#{field_class} resize-vertical", rows: 3)
@@ -527,7 +536,7 @@ module ElaineCrud
     # @return [Integer] Number of columns this field should span
     def field_grid_column_span(field_name)
       config = controller.field_config_for(field_name)
-      
+
       # Check if field configuration specifies a column span
       if config&.respond_to?(:grid_column_span) && config.grid_column_span
         config.grid_column_span
@@ -543,18 +552,61 @@ module ElaineCrud
         end
       end
     end
-    
+
     # Get CSS classes for grid field layout
     # @param field_name [Symbol] The field name
     # @return [String] CSS classes for grid column styling
     def field_grid_classes(field_name)
       span = field_grid_column_span(field_name)
       classes = []
-      
+
       # Add column span class if greater than 1
       classes << "col-span-#{span}" if span > 1
-      
+
       classes.join(' ')
+    end
+
+    # Find belongs_to reflection for a foreign key field
+    # @param model_class [Class] The ActiveRecord model class
+    # @param foreign_key [Symbol] The foreign key field name
+    # @return [ActiveRecord::Reflection::BelongsToReflection, nil] The reflection or nil
+    def find_belongs_to_reflection_for_foreign_key(model_class, foreign_key)
+      model_class.reflections.values.find do |reflection|
+        reflection.is_a?(ActiveRecord::Reflection::BelongsToReflection) &&
+        reflection.foreign_key.to_sym == foreign_key.to_sym
+      end
+    end
+
+    # Render auto-detected foreign key field as select box
+    # @param form [ActionView::Helpers::FormBuilder] The form builder
+    # @param field_name [Symbol] The field name
+    # @param reflection [ActiveRecord::Reflection::BelongsToReflection] The belongs_to reflection
+    # @return [String] HTML-safe form field
+    def render_auto_foreign_key_field(form, field_name, reflection)
+      field_class = "block w-full border border-gray-500 focus:border-gray-700 text-sm bg-white px-3 py-2"
+
+      begin
+        # Get the related model class
+        related_model = reflection.klass
+
+        # Determine display field for the related model
+        display_field = controller.send(:determine_display_field_for_model, related_model)
+
+        # Get all records for the dropdown
+        records = related_model.all.order(display_field)
+        options = records.map { |r| [r.public_send(display_field), r.id] }
+
+        # Get current value to pre-select
+        current_value = form.object.public_send(field_name)
+
+        form.select(field_name, options,
+                   { include_blank: "Select..." },
+                   { class: field_class })
+      rescue => e
+        # If there's an error loading the related model, fall back to number input
+        Rails.logger.warn "ElaineCrud: Could not render foreign key select for #{field_name}: #{e.message}" if Rails.env.development?
+        form.number_field(field_name, class: field_class)
+      end
     end
   end
 end

@@ -61,6 +61,24 @@ RSpec.describe 'Librarians CRUD', type: :feature do
 
       expect(Librarian.count).to eq(initial_count + 1)
     end
+
+    it 'redirects to show page after creating librarian' do
+      visit '/librarians/new'
+
+      fill_in 'librarian[name]', with: 'Redirect Test Librarian'
+      fill_in 'librarian[email]', with: 'redirect@test.com'
+      select 'Assistant', from: 'librarian[role]'
+      select Library.first.name, from: 'librarian[library_id]'
+      fill_in 'librarian[salary]', with: '48000'
+
+      click_button 'Create Librarian'
+
+      # Should redirect to the show page of the newly created librarian
+      new_librarian = Librarian.find_by(email: 'redirect@test.com')
+      expect(current_path).to eq("/librarians/#{new_librarian.id}")
+      expect(page).to have_content('Redirect Test Librarian')
+      expect(page).to have_content('successfully created')
+    end
   end
 
   describe 'Editing a librarian' do

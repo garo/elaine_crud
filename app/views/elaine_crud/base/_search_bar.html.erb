@@ -1,0 +1,75 @@
+<div class="mb-6 bg-white p-4 rounded-lg shadow">
+  <%= form_with url: url_for(action: :index), method: :get, local: true, class: "space-y-4" do |f| %>
+
+    <!-- Global Search -->
+    <div class="flex items-center space-x-2">
+      <div class="flex-1">
+        <%= text_field_tag :search,
+            @search_query,
+            placeholder: "Search #{@model_name.pluralize.downcase}...",
+            class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+      </div>
+      <%= button_tag type: 'submit', class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" do %>
+        🔍 Search
+      <% end %>
+      <% if search_active? %>
+        <%= link_to "Clear", url_for(action: :index), class: "bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded" %>
+      <% end %>
+    </div>
+
+    <!-- Advanced Filters (Collapsible) -->
+    <% if @filterable_columns.any? %>
+      <details class="border-t pt-4">
+        <summary class="cursor-pointer text-blue-600 hover:text-blue-800 font-medium">
+          Advanced Filters
+        </summary>
+
+        <div class="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <% @filterable_columns.each do |field_info| %>
+            <%= render_filter_field(field_info) %>
+          <% end %>
+        </div>
+
+        <div class="mt-4 flex space-x-2">
+          <%= button_tag "Apply Filters", type: 'submit', class: "bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" %>
+          <%= link_to "Clear All Filters", url_for(action: :index, search: @search_query), class: "bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded" %>
+        </div>
+      </details>
+    <% end %>
+
+    <!-- Preserve pagination and sorting params -->
+    <%= hidden_field_tag :per_page, params[:per_page] if params[:per_page] %>
+    <%= hidden_field_tag :sort, params[:sort] if params[:sort] %>
+    <%= hidden_field_tag :direction, params[:direction] if params[:direction] %>
+
+    <!-- Preserve parent filtering params -->
+    <% detect_parent_filters.each do |foreign_key, parent_id| %>
+      <%= hidden_field_tag foreign_key, parent_id %>
+    <% end %>
+  <% end %>
+</div>
+
+<!-- Active Filters Display -->
+<% if @active_filters.any? %>
+  <div class="mb-4 flex flex-wrap gap-2">
+    <span class="text-sm font-medium text-gray-700">Active filters:</span>
+    <% @active_filters.each do |field, value| %>
+      <% next if field.to_s.end_with?('_from', '_to') %>
+      <% next if value.blank? %>
+      <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+        <%= field.to_s.humanize %>: <%= value %>
+        <%= link_to "✕", url_for(filter: @active_filters.except(field), search: @search_query), class: "ml-2 text-blue-600 hover:text-blue-800" %>
+      </span>
+    <% end %>
+  </div>
+<% end %>
+
+<!-- Results Count -->
+<% if search_active? %>
+  <div class="mb-4 text-sm text-gray-600">
+    Showing <%= @records.total_count %> result<%= @records.total_count == 1 ? '' : 's' %>
+    <% if @total_count && @total_count != @records.total_count %>
+      (filtered from <%= @total_count %> total)
+    <% end %>
+  </div>
+<% end %>

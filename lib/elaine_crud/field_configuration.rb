@@ -6,11 +6,12 @@ module ElaineCrud
   class FieldConfiguration
     attr_accessor :field_name, :title, :description, :readonly, :default_value,
                   :display_callback, :edit_callback, :edit_partial, :options, :foreign_key_config,
-                  :has_many_config, :has_one_config, :visible, :grid_column_span
+                  :has_many_config, :has_one_config, :visible, :grid_column_span,
+                  :searchable, :filterable, :filter_type
 
     def initialize(field_name, **options)
       @field_name = field_name
-      
+
       # Set defaults
       @title = options.fetch(:title, field_name.to_s.humanize)
       @description = options.fetch(:description, nil)
@@ -25,6 +26,9 @@ module ElaineCrud
       @has_one_config = options.fetch(:has_one, nil)
       @visible = options.fetch(:visible, nil)
       @grid_column_span = options.fetch(:grid_column_span, nil)
+      @searchable = options.fetch(:searchable, nil)
+      @filterable = options.fetch(:filterable, nil)
+      @filter_type = options.fetch(:filter_type, nil)
     end
 
     # Block-style DSL methods
@@ -91,6 +95,21 @@ module ElaineCrud
     def grid_column_span(value = nil)
       return @grid_column_span if value.nil?
       @grid_column_span = value
+    end
+
+    def searchable(value = nil)
+      return @searchable if value.nil?
+      @searchable = value
+    end
+
+    def filterable(value = nil)
+      return @filterable if value.nil?
+      @filterable = value
+    end
+
+    def filter_type(value = nil)
+      return @filter_type if value.nil?
+      @filter_type = value
     end
 
     # Helper methods for checking configuration state

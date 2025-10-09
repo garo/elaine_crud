@@ -22,6 +22,7 @@ module ElaineCrud
     initializer 'elaine_crud.include_helpers' do
       ActiveSupport.on_load :action_controller do
         include ElaineCrud::BaseHelper
+        include ElaineCrud::SearchHelper
       end
     end
   end

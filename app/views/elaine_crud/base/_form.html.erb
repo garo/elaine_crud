@@ -1,5 +1,5 @@
 <%# Shared form partial for new and edit views %>
-<% form_url = record.persisted? ? url_for(action: :update, id: record.id) : url_for(action: :create) %>
+<% form_url = record.persisted? ? { action: :update, id: record.id } : { action: :create } %>
 <%= form_with model: record, url: form_url, local: true, class: "space-y-6" do |form| %>
   
   <%# Handle parent context for has_many relationships %>

@@ -11,6 +11,7 @@ module ElaineCrud
   class BaseController < ActionController::Base
     # Include all concerns
     include ElaineCrud::SortingConcern
+    include ElaineCrud::SearchAndFiltering
     include ElaineCrud::DSLMethods
     include ElaineCrud::FieldConfigurationMethods
     include ElaineCrud::LayoutCalculation
@@ -33,6 +34,13 @@ module ElaineCrud
       @records = fetch_records
       @model_name = crud_model.name
       @columns = determine_columns
+
+      # Search/filter metadata
+      @search_query = search_query
+      @active_filters = filters
+      @searchable_columns = determine_searchable_columns
+      @filterable_columns = determine_filterable_columns
+      @total_count = total_unfiltered_count if search_active?
 
       # Handle inline editing mode
       @edit_record_id = params[:edit].to_i if params[:edit].present?
@@ -112,7 +120,7 @@ module ElaineCrud
           render partial: 'elaine_crud/base/view_row', locals: { record: @record, columns: @columns, header_layout: header_layout }
         elsif params[:from_inline_edit]
           # Legacy inline edit mode (will be deprecated)
-          redirect_to url_for(action: :index, page: params[:page], per_page: params[:per_page]), notice: "#{crud_model.name} was successfully updated."
+          redirect_to polymorphic_path([crud_model], page: params[:page], per_page: params[:per_page]), notice: "#{crud_model.name} was successfully updated."
         else
           redirect_to polymorphic_path(@record), notice: "#{crud_model.name} was successfully updated."
         end
@@ -146,7 +154,7 @@ module ElaineCrud
         render partial: 'elaine_crud/base/view_row', locals: { record: @record, columns: @columns, header_layout: header_layout }
       else
         # For direct access, redirect to index
-        redirect_to url_for(action: :index)
+        redirect_to action: :index
       end
     end
 

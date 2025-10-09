@@ -4,7 +4,7 @@
 <% total_columns = header_layout.length %>
 
 <%# Edit form spans all columns %>
-<%= form_with model: record, url: "/#{controller_path}/#{record.id}", method: :patch, class: "contents" do |form| %>
+<%= form_with model: record, url: { action: :update, id: record.id }, method: :patch, class: "contents" do |form| %>
   <%= hidden_field_tag :from_inline_edit, true %>
 
   <%# Form content spanning all columns (including actions column) %>

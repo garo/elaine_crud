@@ -26,6 +26,9 @@ module ElaineCrud
       includes_list = get_all_relationship_includes
       records = records.includes(includes_list) if includes_list.any?
 
+      # Apply search and filters
+      records = apply_search_and_filters(records)
+
       # Apply sorting
       records = apply_sorting(records)
 

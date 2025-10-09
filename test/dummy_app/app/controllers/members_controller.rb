@@ -7,32 +7,50 @@ class MembersController < ElaineCrud::BaseController
 
   default_sort column: :name, direction: :asc
 
-  # Dropdown with predefined options
-  field :membership_type do |f|
-    f.title "Membership Type"
-    f.options ["Standard", "Premium", "Student", "Senior"]
+  # Name field - searchable
+  field :name do |f|
+    f.searchable true
   end
 
-  # Email with mailto link
+  # Email - searchable with mailto link
   field :email do |f|
+    f.searchable true
     f.display_as { |value, record|
       mail_to(value, value, class: "text-blue-600 hover:text-blue-800") if value.present?
     }
   end
 
-  # Date formatting
+  # Dropdown with predefined options - filterable
+  field :membership_type do |f|
+    f.title "Membership Type"
+    f.options ["Standard", "Premium", "Student", "Senior"]
+    f.filterable true
+    f.filter_type :select
+  end
+
+  # Date formatting - filterable with date range
   field :joined_at do |f|
     f.title "Member Since"
     f.display_as { |value, record|
       value&.strftime("%B %d, %Y")
     }
+    f.filterable true
+    f.filter_type :date_range
   end
 
-  # Boolean active status
+  # Boolean active status - filterable
   field :active do |f|
     f.display_as { |value, record|
       value ? '✓ Active' : '✗ Inactive'
     }
+    f.filterable true
+    f.filter_type :boolean
+  end
+
+  # Library foreign key - filterable
+  field :library_id do |f|
+    f.filterable true
+    f.filter_type :select
   end
 
   # Foreign key: library_id auto-configured

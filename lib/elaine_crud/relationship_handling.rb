@@ -6,6 +6,11 @@ module ElaineCrud
   module RelationshipHandling
     extend ActiveSupport::Concern
 
+    included do
+      # Make parent filter methods available as helper methods in views
+      helper_method :detect_parent_filters if respond_to?(:helper_method)
+    end
+
     # Get list of belongs_to associations to include for avoiding N+1 queries
     # @return [Array<Symbol>] List of association names to include
     def get_belongs_to_includes
@@ -183,7 +188,7 @@ module ElaineCrud
     def redirect_after_create_path
       if @parent_context
         # Redirect back to filtered index view
-        url_for(action: :index, @parent_context[:foreign_key] => @parent_context[:record].id)
+        polymorphic_path([crud_model], @parent_context[:foreign_key] => @parent_context[:record].id)
       else
         # Standard redirect to show page
         polymorphic_path(@record)
