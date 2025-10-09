@@ -3,6 +3,7 @@ puts "Clearing existing data..."
 Loan.destroy_all
 Profile.destroy_all
 Book.destroy_all
+Tag.destroy_all
 Member.destroy_all
 Librarian.destroy_all
 Author.destroy_all
@@ -73,6 +74,20 @@ authors = [
     country: "Nigeria",
     active: true
   )
+]
+
+puts "Creating tags..."
+tags = [
+  Tag.create!(name: "Fiction", color: "#3B82F6"),
+  Tag.create!(name: "Non-Fiction", color: "#10B981"),
+  Tag.create!(name: "Science Fiction", color: "#8B5CF6"),
+  Tag.create!(name: "Mystery", color: "#F59E0B"),
+  Tag.create!(name: "Romance", color: "#EC4899"),
+  Tag.create!(name: "Award Winner", color: "#EF4444"),
+  Tag.create!(name: "Bestseller", color: "#14B8A6"),
+  Tag.create!(name: "Classic", color: "#6366F1"),
+  Tag.create!(name: "New Release", color: "#84CC16"),
+  Tag.create!(name: "Dystopian", color: "#64748B")
 ]
 
 puts "Creating books..."
@@ -330,6 +345,31 @@ Profile.create!(
   avatar_url: "https://i.pravatar.cc/150?img=33"
 )
 
+puts "Assigning tags to books..."
+# Pride and Prejudice - Fiction, Romance, Classic
+books[0].tags << [tags[0], tags[4], tags[7]]
+
+# 1984 - Fiction, Science Fiction, Dystopian, Classic, Award Winner
+books[1].tags << [tags[0], tags[2], tags[9], tags[7], tags[5]]
+
+# To Kill a Mockingbird - Fiction, Classic, Award Winner
+books[2].tags << [tags[0], tags[7], tags[5]]
+
+# The Great Gatsby - Fiction, Classic, Romance
+books[3].tags << [tags[0], tags[7], tags[4]]
+
+# Brave New World - Science Fiction, Dystopian, Classic
+books[4].tags << [tags[2], tags[9], tags[7]]
+
+# The Catcher in the Rye - Fiction, Classic
+books[5].tags << [tags[0], tags[7]]
+
+# Sapiens - Non-Fiction, Bestseller, New Release
+books[6].tags << [tags[1], tags[6], tags[8]]
+
+# Half of a Yellow Sun - Fiction, Award Winner
+books[7].tags << [tags[0], tags[5]]
+
 puts "\n" + "="*60
 puts "Seed data created successfully!"
 puts "="*60
@@ -337,6 +377,7 @@ puts "Summary:"
 puts "  Libraries: #{Library.count}"
 puts "  Authors: #{Author.count}"
 puts "  Books: #{Book.count}"
+puts "  Tags: #{Tag.count}"
 puts "  Members: #{Member.count}"
 puts "  Profiles: #{Profile.count}"
 puts "  Loans: #{Loan.count}"

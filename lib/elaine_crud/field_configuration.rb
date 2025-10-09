@@ -6,7 +6,7 @@ module ElaineCrud
   class FieldConfiguration
     attr_accessor :field_name, :title, :description, :readonly, :default_value,
                   :display_callback, :edit_callback, :edit_partial, :options, :foreign_key_config,
-                  :has_many_config, :has_one_config, :visible, :grid_column_span,
+                  :has_many_config, :has_one_config, :habtm_config, :visible, :grid_column_span,
                   :searchable, :filterable, :filter_type
 
     def initialize(field_name, **options)
@@ -24,6 +24,7 @@ module ElaineCrud
       @foreign_key_config = options.fetch(:foreign_key, nil)
       @has_many_config = options.fetch(:has_many, nil)
       @has_one_config = options.fetch(:has_one, nil)
+      @habtm_config = options.fetch(:habtm, nil)
       @visible = options.fetch(:visible, nil)
       @grid_column_span = options.fetch(:grid_column_span, nil)
       @searchable = options.fetch(:searchable, nil)
@@ -87,6 +88,12 @@ module ElaineCrud
       @has_one_config = config
     end
 
+    def habtm(**config)
+      return @habtm_config if config.empty?
+      @habtm_config ||= {}
+      @habtm_config.merge!(config)
+    end
+
     def visible(value = nil)
       return @visible if value.nil?
       @visible = value
@@ -127,6 +134,10 @@ module ElaineCrud
 
     def has_has_one?
       @has_one_config.present?
+    end
+
+    def has_habtm?
+      @habtm_config.present?
     end
 
     def has_custom_display?

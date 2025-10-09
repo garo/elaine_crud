@@ -35,8 +35,14 @@
   <%# Should include field descriptions as help text %>
   <div class="space-y-4">
     <% permitted_attributes.each do |field_name| %>
+      <%# Handle hash entries (like {tag_ids: []}) - convert to association name %>
+      <% if field_name.is_a?(Hash) %>
+        <%# Extract the key and convert tag_ids -> tags %>
+        <% field_name = field_name.keys.first.to_s.sub(/_ids$/, '').pluralize.to_sym %>
+      <% end %>
+
       <div class="form-group">
-        <label for="<%= "#{record.class.name.underscore}_#{field_name}" %>" 
+        <label for="<%= "#{record.class.name.underscore}_#{field_name}" %>"
                class="block text-sm font-medium text-gray-700 mb-1">
           <%= field_title(field_name) %>
           <% if field_readonly?(field_name) %>

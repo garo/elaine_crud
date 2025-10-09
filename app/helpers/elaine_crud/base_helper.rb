@@ -47,6 +47,11 @@ module ElaineCrud
         return display_has_one_value(record, field_name, config)
       end
 
+      # Handle has_and_belongs_to_many relationships
+      if config&.has_habtm? || is_habtm_relationship?(record, field_name)
+        return display_habtm_field(record, field_name, config)
+      end
+
       # If field has custom display configuration, use it
       if config&.has_custom_display?
         config.render_display_value(record, controller)
@@ -170,7 +175,38 @@ module ElaineCrud
       reflection = record.class.reflections[field_name.to_s]
       reflection&.is_a?(ActiveRecord::Reflection::HasManyReflection)
     end
-    
+
+    # Check if field is a has_and_belongs_to_many relationship
+    def is_habtm_relationship?(record, field_name)
+      reflection = record.class.reflections[field_name.to_s]
+      reflection&.is_a?(ActiveRecord::Reflection::HasAndBelongsToManyReflection)
+    end
+
+    # Display HABTM field value - minimal implementation
+    # Applications should use display_as for custom rendering
+    # @param record [ActiveRecord::Base] The record to display
+    # @param field_name [Symbol] The field name
+    # @param config [FieldConfiguration] The field configuration
+    # @return [String] The formatted HABTM value
+    def display_habtm_field(record, field_name, config)
+      related_records = record.public_send(field_name)
+
+      return content_tag(:span, "—", class: "text-gray-400") if related_records.empty?
+
+      # Basic display: comma-separated list of first few items
+      habtm_config = config&.habtm_config || {}
+      display_field = habtm_config[:display_field] || :name
+
+      preview_items = related_records.first(3).map { |r| r.public_send(display_field) }
+      preview_text = preview_items.join(", ")
+      preview_text += ", ..." if related_records.count > 3
+
+      content_tag(:span, preview_text, class: "text-sm text-gray-900")
+    rescue => e
+      Rails.logger.error "ElaineCrud: Error rendering HABTM field #{field_name}: #{e.message}"
+      content_tag(:span, "Error loading relationships", class: 'text-red-400')
+    end
+
     # Generate a human-readable title for the model
     # @param model_class [Class] The ActiveRecord model class
     # @return [String] Human-readable title
@@ -221,6 +257,9 @@ module ElaineCrud
       elsif config&.has_has_one?
         content_tag(:div, display_field_value(record, field_name),
                    class: "px-3 py-2 bg-gray-100 border border-gray-500 text-gray-600")
+      # has_and_belongs_to_many associations - render checkboxes
+      elsif config&.has_habtm? || is_habtm_relationship?(record, field_name)
+        render_habtm_field(form, record, field_name, config)
       elsif config&.has_edit_partial?
         # Render using partial
         render_partial_edit_field(config, record, form, field_name)
@@ -607,6 +646,53 @@ module ElaineCrud
         Rails.logger.warn "ElaineCrud: Could not render foreign key select for #{field_name}: #{e.message}" if Rails.env.development?
         form.number_field(field_name, class: field_class)
       end
+    end
+
+    # Render HABTM field for forms (checkboxes)
+    # @param form [ActionView::Helpers::FormBuilder] The form builder
+    # @param record [ActiveRecord::Base] The record being edited
+    # @param field_name [Symbol] The field name
+    # @param config [FieldConfiguration] The field configuration
+    # @return [String] HTML-safe form field
+    def render_habtm_field(form, record, field_name, config)
+      reflection = record.class.reflections[field_name.to_s]
+      related_model = reflection.klass
+
+      # Get configuration or use defaults
+      habtm_config = config&.habtm_config || {}
+      display_field = habtm_config[:display_field] || :name
+
+      # Get all available records
+      all_records = related_model.all.order(display_field)
+
+      # Get currently selected IDs
+      selected_ids = record.public_send(field_name).pluck(:id)
+
+      # Add hidden field to ensure empty array is submitted when no checkboxes are checked
+      hidden_field = hidden_field_tag("#{record.class.name.underscore}[#{field_name.to_s.singularize}_ids][]", "", id: nil)
+
+      # Render checkboxes in a scrollable container
+      hidden_field.html_safe + content_tag(:div, class: "space-y-2 max-h-64 overflow-y-auto border border-gray-300 rounded p-3 bg-white") do
+        all_records.map do |related_record|
+          checkbox_id = "#{record.class.name.underscore}_#{field_name.to_s.singularize}_ids_#{related_record.id}"
+
+          content_tag(:div, class: "flex items-center") do
+            label_text = related_record.public_send(display_field)
+
+            concat check_box_tag(
+              "#{record.class.name.underscore}[#{field_name.to_s.singularize}_ids][]",
+              related_record.id,
+              selected_ids.include?(related_record.id),
+              id: checkbox_id,
+              class: "h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+            )
+            concat label_tag(checkbox_id, label_text, class: "ml-2 text-sm text-gray-700")
+          end
+        end.join.html_safe
+      end
+    rescue => e
+      Rails.logger.error "ElaineCrud: Error rendering HABTM form field #{field_name}: #{e.message}"
+      content_tag(:span, "Error loading form field", class: 'text-red-400')
     end
   end
 end

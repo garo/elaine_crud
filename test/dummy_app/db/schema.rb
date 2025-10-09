@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_08_120747) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_09_110827) do
   create_table "authors", force: :cascade do |t|
     t.string "name", null: false
     t.text "biography"
@@ -38,6 +38,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_08_120747) do
     t.index ["isbn"], name: "index_books_on_isbn", unique: true
     t.index ["library_id"], name: "index_books_on_library_id"
     t.index ["title"], name: "index_books_on_title"
+  end
+
+  create_table "books_tags", id: false, force: :cascade do |t|
+    t.integer "book_id", null: false
+    t.integer "tag_id", null: false
+    t.index ["book_id", "tag_id"], name: "index_books_tags_on_book_id_and_tag_id", unique: true
+    t.index ["book_id"], name: "index_books_tags_on_book_id"
+    t.index ["tag_id"], name: "index_books_tags_on_tag_id"
   end
 
   create_table "librarians", force: :cascade do |t|
@@ -104,8 +112,18 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_08_120747) do
     t.index ["member_id"], name: "index_profiles_on_member_id"
   end
 
+  create_table "tags", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "color", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_tags_on_name", unique: true
+  end
+
   add_foreign_key "books", "authors"
   add_foreign_key "books", "libraries"
+  add_foreign_key "books_tags", "books"
+  add_foreign_key "books_tags", "tags"
   add_foreign_key "librarians", "libraries"
   add_foreign_key "loans", "books"
   add_foreign_key "loans", "members"

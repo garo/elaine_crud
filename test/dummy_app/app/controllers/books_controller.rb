@@ -32,6 +32,41 @@ class BooksController < ElaineCrud::BaseController
 
   # has_many :loans automatically shown with count
 
+  # has_and_belongs_to_many :tags - custom polished display
+  # This showcases how developers can build on ElaineCrud's minimal HABTM infrastructure
+  # to create domain-specific, visually polished UI
+  field :tags do |f|
+    f.title "Tags"
+    f.description "Book tags and categories"
+    f.display_as { |value, record|
+      tags = record.tags
+
+      # Handle empty case with styled placeholder
+      if tags.empty?
+        return content_tag(:span, "No tags", class: "text-gray-400 italic text-sm")
+      end
+
+      # Render each tag as a colored badge using the tag's color field
+      max_display = 5
+      displayed_tags = tags.first(max_display)
+
+      tags_html = displayed_tags.map { |tag|
+        content_tag(:span, tag.name,
+          class: "inline-block px-2 py-1 text-xs font-semibold rounded-full text-white mr-1 mb-1",
+          style: "background-color: #{tag.color}"
+        )
+      }.join.html_safe
+
+      # Show "+N more" indicator if there are additional tags
+      if tags.count > max_display
+        tags_html + content_tag(:span, "+#{tags.count - max_display} more",
+          class: "text-xs text-gray-500 ml-1")
+      else
+        tags_html
+      end
+    }
+  end
+
   # Custom two-row layout for better content display
   def calculate_layout(content, fields)
     # Row 1: All regular fields displayed normally (each takes 1 column)
@@ -49,8 +84,9 @@ class BooksController < ElaineCrud::BaseController
     ]
 
     row2 = [
-      { field_name: :description, colspan: 6, rowspan: 1 },
-      { field_name: :loans, colspan: 2, rowspan: 1 }
+      { field_name: :description, colspan: 5, rowspan: 1 },
+      { field_name: :tags, colspan: 2, rowspan: 1 },
+      { field_name: :loans, colspan: 1, rowspan: 1 }
     ]
 
     [row1, row2]

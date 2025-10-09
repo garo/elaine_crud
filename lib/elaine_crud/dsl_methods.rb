@@ -23,6 +23,8 @@ module ElaineCrud
         auto_configure_has_many_relationships if model_class
         # Auto-configure has_one relationships
         auto_configure_has_one_relationships if model_class
+        # Auto-configure has_and_belongs_to_many relationships
+        auto_configure_habtm_relationships if model_class
         # Re-run permit_params to include foreign keys if it was called before model was set
         refresh_permitted_attributes
       end
@@ -46,15 +48,20 @@ module ElaineCrud
         end
       end
 
-      # Get foreign keys from belongs_to relationships
+      # Get foreign keys from belongs_to relationships and HABTM singular_ids
       # @return [Array<Symbol>] List of foreign key attributes
       def get_foreign_keys_from_model
         return [] unless crud_model
 
         foreign_keys = []
         crud_model.reflections.each do |name, reflection|
-          next unless reflection.is_a?(ActiveRecord::Reflection::BelongsToReflection)
-          foreign_keys << reflection.foreign_key.to_sym
+          case reflection
+          when ActiveRecord::Reflection::BelongsToReflection
+            foreign_keys << reflection.foreign_key.to_sym
+          when ActiveRecord::Reflection::HasAndBelongsToManyReflection
+            # Add the singular_ids parameter for HABTM (e.g., tag_ids for tags)
+            foreign_keys << { "#{name.to_s.singularize}_ids".to_sym => [] }
+          end
         end
 
         foreign_keys
@@ -275,6 +282,44 @@ module ElaineCrud
             model: related_model,
             display: display_field,
             foreign_key: reflection.foreign_key
+          }
+        )
+
+        self.field_configurations[field_name] = config
+      end
+
+      # Auto-configure has_and_belongs_to_many relationship display
+      def auto_configure_habtm_relationships
+        return unless crud_model
+
+        self.field_configurations ||= {}
+
+        # Find all HABTM relationships
+        crud_model.reflections.each do |name, reflection|
+          next unless reflection.is_a?(ActiveRecord::Reflection::HasAndBelongsToManyReflection)
+
+          # Skip if already manually configured
+          field_name = name.to_sym
+          next if field_configurations[field_name]
+
+          # Auto-configure this HABTM field
+          auto_configure_habtm_field(reflection)
+        end
+      end
+
+      # Auto-configure a single HABTM relationship field - minimal implementation
+      # Applications should use display_as for custom rendering
+      def auto_configure_habtm_field(reflection)
+        field_name = reflection.name.to_sym
+        related_model = reflection.klass
+
+        # Create minimal field configuration for HABTM
+        config = ElaineCrud::FieldConfiguration.new(
+          field_name,
+          title: reflection.name.to_s.humanize,
+          habtm: {
+            model: related_model,
+            display_field: determine_display_field_for_model(related_model)
           }
         )
 

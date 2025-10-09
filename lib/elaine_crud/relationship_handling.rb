@@ -71,6 +71,25 @@ module ElaineCrud
       includes
     end
 
+    # Get has_and_belongs_to_many relationships that need to be included
+    # @return [Array<Symbol>] List of association names to include
+    def get_habtm_includes
+      return [] unless crud_model
+
+      includes = []
+
+      crud_model.reflections.each do |name, reflection|
+        next unless reflection.is_a?(ActiveRecord::Reflection::HasAndBelongsToManyReflection)
+
+        # Include if this relationship is displayed in columns or configured
+        if determine_columns.include?(name) || field_configured?(name.to_sym)
+          includes << name.to_sym
+        end
+      end
+
+      includes
+    end
+
     # Get list of associations to include for avoiding N+1 queries
     # @return [Array<Symbol>] List of association names to include
     def get_all_relationship_includes
@@ -86,6 +105,9 @@ module ElaineCrud
 
       # Include has_one relationships that are displayed
       includes += get_has_one_includes
+
+      # Include has_and_belongs_to_many relationships that are displayed
+      includes += get_habtm_includes
 
       includes.uniq
     end
