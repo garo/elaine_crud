@@ -38,7 +38,7 @@ class MembersController < ElaineCrud::BaseController
   # Foreign key: library_id auto-configured
   # has_many :loans auto-shown
 
-  # Custom layout to give email and name fields more width
+  # Example on how to customize the column widths
   def calculate_layout_header(fields)
     fields << "ROW-ACTIONS"
 

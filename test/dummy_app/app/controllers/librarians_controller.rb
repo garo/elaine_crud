@@ -38,24 +38,4 @@ class LibrariansController < ElaineCrud::BaseController
 
   # Foreign key: library_id auto-configured
 
-  # Custom layout to give email and name fields more width
-  def calculate_layout_header(fields)
-    fields << "ROW-ACTIONS"
-
-    fields.map do |field_name|
-      # Using minmax() allows columns to expand when content is too large
-      # First value is minimum width, 1fr allows flexible growth
-      width = case field_name.to_s
-              when 'id' then "max-content"
-              when 'email' then "minmax(180px, 2fr)"
-              when 'ROW-ACTIONS' then "minmax(100px, 0.8fr)"
-              else "minmax(180px, 2fr)"
-              end
-
-      {
-        width: width,
-        field_name: field_name
-      }
-    end
-  end
 end
