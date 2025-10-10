@@ -86,6 +86,13 @@ module ElaineCrud
       @model_name = crud_model.name
       @columns = determine_columns
 
+      # Set search/filter metadata for the edit page (which includes search bar)
+      @search_query = search_query
+      @active_filters = filters
+      @searchable_columns = determine_searchable_columns
+      @filterable_columns = determine_filterable_columns
+      @total_count = total_unfiltered_count if search_active?
+
       # If Turbo is disabled, always render the full edit page
       if turbo_disabled?
         render 'elaine_crud/base/edit'
@@ -136,8 +143,21 @@ module ElaineCrud
           @records = fetch_records
           @edit_record_id = @record.id
           @editing_record = @record
+          # Set search/filter metadata for index view (which includes search bar)
+          @search_query = search_query
+          @active_filters = filters
+          @searchable_columns = determine_searchable_columns
+          @filterable_columns = determine_filterable_columns
+          @total_count = total_unfiltered_count if search_active?
           render 'elaine_crud/base/index', status: :unprocessable_entity
         else
+          # Render full edit page with errors - need search/filter metadata
+          @records = fetch_records
+          @search_query = search_query
+          @active_filters = filters
+          @searchable_columns = determine_searchable_columns
+          @filterable_columns = determine_filterable_columns
+          @total_count = total_unfiltered_count if search_active?
           render 'elaine_crud/base/edit', status: :unprocessable_entity
         end
       end

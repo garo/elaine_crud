@@ -8,8 +8,8 @@
     
     <div class="mb-4 p-3 bg-gray-50 rounded-md">
       <p class="text-sm text-gray-600">
-        Creating <%= model_name.downcase %> for 
-        <strong><%= @parent_context[:model_class].name %>:</strong> 
+        Creating <%= record.class.name.underscore.humanize.downcase %> for
+        <strong><%= @parent_context[:model_class].name %>:</strong>
         <%= @parent_context[:record].public_send(controller.send(:determine_display_field_for_model, @parent_context[:model_class])) %>
       </p>
     </div>
@@ -17,11 +17,11 @@
 
   <%# Display validation errors if any %>
   <% if record.errors.any? %>
-    <div class="bg-red-50 border border-red-200 rounded-md p-4">
+    <div class="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
       <h3 class="text-sm font-medium text-red-800">
-        <%= pluralize(record.errors.count, "error") %> prohibited this <%= model_name.downcase %> from being saved:
+        <%= pluralize(record.errors.count, "error") %> prohibited this <%= record.class.name.underscore.humanize.downcase %> from being saved:
       </h3>
-      <ul class="mt-2 text-sm text-red-700">
+      <ul class="mt-2 text-sm text-red-700 list-disc list-inside">
         <% record.errors.full_messages.each do |message| %>
           <li><%= message %></li>
         <% end %>
@@ -36,10 +36,22 @@
   <div class="space-y-4">
     <% permitted_attributes.each do |field_name| %>
       <%# Handle hash entries (like {tag_ids: []}) - convert to association name %>
+      <% original_param_name = field_name %>
       <% if field_name.is_a?(Hash) %>
         <%# Extract the key and convert tag_ids -> tags %>
+        <% original_param_name = field_name.keys.first.to_sym %>
         <% field_name = field_name.keys.first.to_s.sub(/_ids$/, '').pluralize.to_sym %>
       <% end %>
+
+      <%# Determine which field name to check for errors %>
+      <%# For HABTM fields, check both the association name (tags) and param name (tag_ids) %>
+      <% error_field_name = field_name %>
+      <% if original_param_name.is_a?(Symbol) && original_param_name.to_s.end_with?('_ids') %>
+        <% param_field_name = original_param_name.to_s.sub(/_ids$/, '').pluralize.to_sym %>
+        <% error_field_name = record.errors[param_field_name].any? ? param_field_name : original_param_name %>
+      <% end %>
+
+      <% has_error = record.errors[error_field_name].any? %>
 
       <div class="form-group">
         <label for="<%= "#{record.class.name.underscore}_#{field_name}" %>"
@@ -49,9 +61,17 @@
             <span class="text-xs text-gray-500">(read-only)</span>
           <% end %>
         </label>
-        
-        <%= render_form_field(form, record, field_name) %>
-        
+
+        <%= render_form_field(form, record, field_name, has_error: has_error) %>
+
+        <%# Display field-level error message %>
+        <% if has_error %>
+          <p class="text-sm text-red-600 mt-1">
+            <%= record.errors[error_field_name].first %>
+          </p>
+        <% end %>
+
+        <%# Display field description (help text) %>
         <% if field_description(field_name).present? %>
           <p class="text-xs text-gray-500 mt-1">
             <%= field_description(field_name) %>

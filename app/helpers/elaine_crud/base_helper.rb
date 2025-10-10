@@ -240,7 +240,7 @@ module ElaineCrud
     # @param record [ActiveRecord::Base] The record being edited
     # @param field_name [Symbol] The field name
     # @return [String] HTML-safe form field
-    def render_form_field(form, record, field_name)
+    def render_form_field(form, record, field_name, has_error: false)
       config = controller.field_config_for(field_name)
 
       # If field is readonly, show the display value instead of an input
@@ -257,7 +257,7 @@ module ElaineCrud
                    class: "px-3 py-2 bg-gray-100 border border-gray-500 text-gray-600")
       # has_and_belongs_to_many associations - render checkboxes
       elsif config&.has_habtm? || is_habtm_relationship?(record, field_name)
-        render_habtm_field(form, record, field_name, config)
+        render_habtm_field(form, record, field_name, config, has_error: has_error)
       elsif config&.has_edit_partial?
         # Render using partial
         render_partial_edit_field(config, record, form, field_name)
@@ -266,13 +266,13 @@ module ElaineCrud
         render_custom_edit_field(config, record, form, self)
       elsif config&.has_options?
         # Render options dropdown
-        render_options_field(form, field_name, config)
+        render_options_field(form, field_name, config, has_error: has_error)
       elsif config&.has_foreign_key?
         # Render foreign key dropdown
-        render_foreign_key_field(form, field_name, config)
+        render_foreign_key_field(form, field_name, config, has_error: has_error)
       else
         # Default form field based on ActiveRecord column type
-        render_default_form_field(form, record, field_name)
+        render_default_form_field(form, record, field_name, has_error: has_error)
       end
     end
 
@@ -280,18 +280,21 @@ module ElaineCrud
     # @param form [ActionView::Helpers::FormBuilder] The form builder
     # @param record [ActiveRecord::Base] The record
     # @param field_name [Symbol] The field name
+    # @param has_error [Boolean] Whether the field has a validation error
     # @return [String] HTML-safe form field
-    def render_default_form_field(form, record, field_name)
+    def render_default_form_field(form, record, field_name, has_error: false)
       column = record.class.columns.find { |c| c.name == field_name.to_s }
 
-      field_class = "block w-full border border-gray-500 focus:border-gray-700 text-sm bg-white px-3 py-2"
+      # Error styling: red border for invalid fields, gray for valid
+      border_color = has_error ? "border-red-500 focus:border-red-700" : "border-gray-500 focus:border-gray-700"
+      field_class = "block w-full border #{border_color} text-sm bg-white px-3 py-2"
 
       # Check if this is a foreign key (integer field ending in _id with a belongs_to association)
       if column&.type == :integer && field_name.to_s.end_with?('_id')
         reflection = find_belongs_to_reflection_for_foreign_key(record.class, field_name)
         if reflection
           # Render as select box for foreign key
-          return render_auto_foreign_key_field(form, field_name, reflection)
+          return render_auto_foreign_key_field(form, field_name, reflection, has_error: has_error)
         end
       end
 
@@ -377,9 +380,10 @@ module ElaineCrud
     # @param field_name [Symbol] The field name
     # @param config [FieldConfiguration] The field configuration
     # @return [String] HTML-safe form field
-    def render_options_field(form, field_name, config)
-      field_class = "block w-full border border-gray-500 focus:border-gray-700 text-sm bg-white px-3 py-2"
-      
+    def render_options_field(form, field_name, config, has_error: false)
+      border_color = has_error ? "border-red-500 focus:border-red-700" : "border-gray-500 focus:border-gray-700"
+      field_class = "block w-full border #{border_color} text-sm bg-white px-3 py-2"
+
       # Handle both array and hash options
       options = case config.options
       when Array
@@ -389,9 +393,9 @@ module ElaineCrud
       else
         []
       end
-      
-      form.select(field_name, options, 
-                 { include_blank: "Select..." }, 
+
+      form.select(field_name, options,
+                 { include_blank: "Select..." },
                  { class: field_class })
     end
 
@@ -400,14 +404,15 @@ module ElaineCrud
     # @param field_name [Symbol] The field name
     # @param config [FieldConfiguration] The field configuration
     # @return [String] HTML-safe form field
-    def render_foreign_key_field(form, field_name, config)
-      field_class = "block w-full border border-gray-500 focus:border-gray-700 text-sm bg-white px-3 py-2"
-      
+    def render_foreign_key_field(form, field_name, config, has_error: false)
+      border_color = has_error ? "border-red-500 focus:border-red-700" : "border-gray-500 focus:border-gray-700"
+      field_class = "block w-full border #{border_color} text-sm bg-white px-3 py-2"
+
       # Get the current value of the field to pre-select it
       current_value = form.object.public_send(field_name)
       options = foreign_key_options_for_field(field_name, current_value)
-      
-      form.select(field_name, options, 
+
+      form.select(field_name, options,
                  { include_blank: config.foreign_key_config[:null_option] || "Select..." },
                  { class: field_class })
     end
@@ -618,9 +623,11 @@ module ElaineCrud
     # @param form [ActionView::Helpers::FormBuilder] The form builder
     # @param field_name [Symbol] The field name
     # @param reflection [ActiveRecord::Reflection::BelongsToReflection] The belongs_to reflection
+    # @param has_error [Boolean] Whether the field has a validation error
     # @return [String] HTML-safe form field
-    def render_auto_foreign_key_field(form, field_name, reflection)
-      field_class = "block w-full border border-gray-500 focus:border-gray-700 text-sm bg-white px-3 py-2"
+    def render_auto_foreign_key_field(form, field_name, reflection, has_error: false)
+      border_color = has_error ? "border-red-500 focus:border-red-700" : "border-gray-500 focus:border-gray-700"
+      field_class = "block w-full border #{border_color} text-sm bg-white px-3 py-2"
 
       begin
         # Get the related model class
@@ -651,8 +658,9 @@ module ElaineCrud
     # @param record [ActiveRecord::Base] The record being edited
     # @param field_name [Symbol] The field name
     # @param config [FieldConfiguration] The field configuration
+    # @param has_error [Boolean] Whether the field has a validation error
     # @return [String] HTML-safe form field
-    def render_habtm_field(form, record, field_name, config)
+    def render_habtm_field(form, record, field_name, config, has_error: false)
       reflection = record.class.reflections[field_name.to_s]
       related_model = reflection.klass
 
@@ -669,8 +677,11 @@ module ElaineCrud
       # Add hidden field to ensure empty array is submitted when no checkboxes are checked
       hidden_field = hidden_field_tag("#{record.class.name.underscore}[#{field_name.to_s.singularize}_ids][]", "", id: nil)
 
+      # Error styling for checkbox container
+      border_color = has_error ? "border-red-500" : "border-gray-300"
+
       # Render checkboxes in a scrollable container
-      hidden_field.html_safe + content_tag(:div, class: "space-y-2 max-h-64 overflow-y-auto border border-gray-300 rounded p-3 bg-white") do
+      hidden_field.html_safe + content_tag(:div, class: "space-y-2 max-h-64 overflow-y-auto border #{border_color} rounded p-3 bg-white") do
         all_records.map do |related_record|
           checkbox_id = "#{record.class.name.underscore}_#{field_name.to_s.singularize}_ids_#{related_record.id}"
 
