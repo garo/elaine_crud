@@ -84,8 +84,8 @@ class BooksController < ElaineCrud::BaseController
     ]
 
     row2 = [
-      { field_name: :description, colspan: 5, rowspan: 1 },
-      { field_name: :tags, colspan: 2, rowspan: 1 },
+      { field_name: :description, colspan: 4, rowspan: 1 },
+      { field_name: :tags, colspan: 3, rowspan: 1 },
       { field_name: :loans, colspan: 1, rowspan: 1 }
     ]
 
