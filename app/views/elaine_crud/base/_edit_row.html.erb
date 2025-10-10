@@ -3,12 +3,14 @@
 <% header_layout = calculate_layout_header(columns.map(&:to_sym)) %>
 <% total_columns = header_layout.length %>
 
-<%# Edit form spans all columns %>
-<%= form_with model: record, url: { action: :update, id: record.id }, method: :patch, class: "contents" do |form| %>
-  <%= hidden_field_tag :from_inline_edit, true %>
+<%# Wrap entire edit row in matching turbo-frame %>
+<turbo-frame id="record_<%= record.id %>" class="contents">
+  <%# Edit form spans all columns %>
+  <%= form_with model: record, url: { action: :update, id: record.id }, method: :patch, class: "contents" do |form| %>
+    <%= hidden_field_tag :from_inline_edit, true %>
 
-  <%# Form content spanning all columns (including actions column) %>
-  <div class="bg-blue-50 border-2 border-blue-400 p-6 border-b <%= row_bg_class %>" style="grid-column: 1 / -1;" data-record-id="<%= record_id %>">
+    <%# Form content spanning all columns (including actions column) %>
+    <div class="bg-blue-50 border-2 border-blue-400 p-6 border-b" style="grid-column: 1 / -1;">
     <%# Calculate layout for this record %>
     <% record_layout = calculate_layout(record, columns.map(&:to_sym)) %>
 
@@ -55,4 +57,5 @@
           class: "bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-6 rounded shadow-md border-2 border-gray-400" %>
     </div>
   </div>
-<% end %>
+  <% end %>
+</turbo-frame>

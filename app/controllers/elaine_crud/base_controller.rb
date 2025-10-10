@@ -123,8 +123,8 @@ module ElaineCrud
 
         # For Turbo Frame requests, return the view row partial
         if turbo_frame_request?
-          header_layout = calculate_layout_header(@columns.map(&:to_sym))
-          render partial: 'elaine_crud/base/view_row', locals: { record: @record, columns: @columns, header_layout: header_layout }
+          # Use bg-white for consistency when returning from edit (alternating colors handled by full page refresh)
+          render partial: 'elaine_crud/base/view_row', locals: { record: @record, columns: @columns, row_bg_class: 'bg-white', is_last_record: false }
         elsif params[:from_inline_edit]
           # Legacy inline edit mode (will be deprecated)
           redirect_to polymorphic_path([crud_model], page: params[:page], per_page: params[:per_page]), notice: "#{crud_model.name} was successfully updated."

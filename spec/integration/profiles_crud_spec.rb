@@ -76,8 +76,10 @@ RSpec.describe 'Profiles CRUD - has_one relationship', type: :feature do
       visit '/profiles'
       initial_count = Profile.count
 
-      delete_link = page.all("[data-record-id='record_#{profile.id}'] a", text: 'Delete').first
-      delete_link.click
+      # Find delete link within the turbo-frame for this record
+      within("turbo-frame#record_#{profile.id}") do
+        click_link 'Delete'
+      end
 
       expect(Profile.count).to eq(initial_count - 1)
     end

@@ -4,51 +4,90 @@
 <% has_multiple_rows = record_layout.length > 1 %>
 <% is_last_record = defined?(is_last_record) ? is_last_record : false %>
 
-<%# Render each row's cells %>
-<% record_layout.each_with_index do |layout_row, row_index| %>
-  <% is_last_row = row_index == record_layout.length - 1 %>
-  <% layout_row.each do |column_config| %>
-    <% field_name = column_config[:field_name] %>
-    <% colspan = column_config[:colspan] || 1 %>
-    <% rowspan = column_config[:rowspan] || 1 %>
-    <% cell_border_bottom = (has_multiple_rows && !is_last_row) || !is_last_record ? 'border-b' : '' %>
+<%# Wrap entire row in turbo-frame for row-level inline editing %>
+<% if controller.respond_to?(:turbo_disabled?) && controller.turbo_disabled? %>
+  <%# Turbo disabled - render cells directly without frame %>
+  <% record_layout.each_with_index do |layout_row, row_index| %>
+    <% is_last_row = row_index == record_layout.length - 1 %>
+    <% layout_row.each do |column_config| %>
+      <% field_name = column_config[:field_name] %>
+      <% colspan = column_config[:colspan] || 1 %>
+      <% rowspan = column_config[:rowspan] || 1 %>
+      <% cell_border_bottom = (has_multiple_rows && !is_last_row) || !is_last_record ? 'border-b' : '' %>
 
-    <% if controller.respond_to?(:turbo_disabled?) && controller.turbo_disabled? %>
-      <div class="px-3 py-3 text-sm text-gray-900 border-r border-gray-200 <%= cell_border_bottom %> break-words <%= row_bg_class %> hover:bg-blue-50 <%= 'col-span-' + colspan.to_s if colspan > 1 %> <%= 'row-span-' + rowspan.to_s if rowspan > 1 %>" data-record-id="<%= record_id %>">
+      <div class="px-3 py-3 text-sm text-gray-900 border-r border-gray-200 <%= cell_border_bottom %> break-words <%= row_bg_class %> hover:bg-blue-50 <%= 'col-span-' + colspan.to_s if colspan > 1 %> <%= 'row-span-' + rowspan.to_s if rowspan > 1 %>">
         <%= display_field_value(record, field_name) %>
       </div>
-    <% else %>
-      <turbo-frame id="record_<%= record.id %>_<%= field_name %>" class="contents">
-        <div class="px-3 py-3 text-sm text-gray-900 border-r border-gray-200 <%= cell_border_bottom %> break-words <%= row_bg_class %> hover:bg-blue-50 <%= 'col-span-' + colspan.to_s if colspan > 1 %> <%= 'row-span-' + rowspan.to_s if rowspan > 1 %>" data-record-id="<%= record_id %>">
-          <%= display_field_value(record, field_name) %>
+    <% end %>
+
+    <%# Actions column (only on first row) %>
+    <% if row_index == 0 %>
+      <% actions_border_bottom = has_multiple_rows ? '' : (is_last_record ? '' : 'border-b') %>
+      <div class="px-3 py-3 text-sm text-gray-500 border-gray-200 <%= row_bg_class %> hover:bg-blue-50 <%= actions_border_bottom %> <%= 'row-span-' + record_layout.length.to_s if record_layout.length > 1 %>">
+        <div class="flex space-x-2">
+          <% if controller.class.show_view_action_button %>
+            <%= link_to "View",
+                url_for(action: :show, id: record.id),
+                class: "text-blue-600 hover:text-blue-900",
+                data: { turbo: false } %>
+          <% end %>
+          <%= link_to "Edit",
+              url_for(action: :edit, id: record.id, page: params[:page], per_page: params[:per_page]),
+              class: "text-green-600 hover:text-green-900",
+              data: { turbo: false } %>
+          <%= link_to "Delete",
+              url_for(action: :destroy, id: record.id),
+              method: :delete,
+              data: {
+                confirm: "Are you sure?",
+                turbo_method: :delete
+              },
+              class: "text-red-600 hover:text-red-900" %>
         </div>
-      </turbo-frame>
+      </div>
     <% end %>
   <% end %>
+<% else %>
+  <%# Turbo enabled - wrap entire row in single turbo-frame %>
+  <turbo-frame id="record_<%= record.id %>" class="contents">
+    <% record_layout.each_with_index do |layout_row, row_index| %>
+      <% is_last_row = row_index == record_layout.length - 1 %>
+      <% layout_row.each do |column_config| %>
+        <% field_name = column_config[:field_name] %>
+        <% colspan = column_config[:colspan] || 1 %>
+        <% rowspan = column_config[:rowspan] || 1 %>
+        <% cell_border_bottom = (has_multiple_rows && !is_last_row) || !is_last_record ? 'border-b' : '' %>
 
-  <%# Actions column (only on first row) %>
-  <% if row_index == 0 %>
-    <% actions_border_bottom = has_multiple_rows ? '' : (is_last_record ? '' : 'border-b') %>
-    <div class="px-3 py-3 text-sm text-gray-500 border-gray-200 <%= row_bg_class %> hover:bg-blue-50 <%= actions_border_bottom %> <%= 'row-span-' + record_layout.length.to_s if record_layout.length > 1 %>" data-record-id="<%= record_id %>">
-      <div class="flex space-x-2">
-        <% if controller.class.show_view_action_button %>
-          <%= link_to "View",
-              url_for(action: :show, id: record.id),
-              class: "text-blue-600 hover:text-blue-900" %>
-        <% end %>
-        <%= link_to "Edit",
-            url_for(action: :edit, id: record.id, page: params[:page], per_page: params[:per_page]),
-            class: "text-green-600 hover:text-green-900",
-            data: (controller.respond_to?(:turbo_disabled?) && controller.turbo_disabled?) ? { turbo: false } : {} %>
-        <%= link_to "Delete",
-            url_for(action: :destroy, id: record.id),
-            method: :delete,
-            data: {
-              confirm: "Are you sure?",
-              turbo_method: :delete
-            },
-            class: "text-red-600 hover:text-red-900" %>
-      </div>
-    </div>
-  <% end %>
+        <div class="px-3 py-3 text-sm text-gray-900 border-r border-gray-200 <%= cell_border_bottom %> break-words <%= row_bg_class %> hover:bg-blue-50 <%= 'col-span-' + colspan.to_s if colspan > 1 %> <%= 'row-span-' + rowspan.to_s if rowspan > 1 %>">
+          <%= display_field_value(record, field_name) %>
+        </div>
+      <% end %>
+
+      <%# Actions column (only on first row) %>
+      <% if row_index == 0 %>
+        <% actions_border_bottom = has_multiple_rows ? '' : (is_last_record ? '' : 'border-b') %>
+        <div class="px-3 py-3 text-sm text-gray-500 border-gray-200 <%= row_bg_class %> hover:bg-blue-50 <%= actions_border_bottom %> <%= 'row-span-' + record_layout.length.to_s if record_layout.length > 1 %>">
+          <div class="flex space-x-2">
+            <% if controller.class.show_view_action_button %>
+              <%= link_to "View",
+                  url_for(action: :show, id: record.id),
+                  class: "text-blue-600 hover:text-blue-900",
+                  data: { turbo_frame: "_top" } %>
+            <% end %>
+            <%= link_to "Edit",
+                url_for(action: :edit, id: record.id, page: params[:page], per_page: params[:per_page]),
+                class: "text-green-600 hover:text-green-900" %>
+            <%= link_to "Delete",
+                url_for(action: :destroy, id: record.id),
+                method: :delete,
+                data: {
+                  confirm: "Are you sure?",
+                  turbo_method: :delete
+                },
+                class: "text-red-600 hover:text-red-900" %>
+          </div>
+        </div>
+      <% end %>
+    <% end %>
+  </turbo-frame>
 <% end %>

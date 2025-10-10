@@ -40,8 +40,8 @@ module TestHelpers
 
   # Helper to count table rows
   def count_table_rows
-    # Count unique record IDs (each record may have multiple cells due to grid layout)
-    page.all('[data-record-id]').map { |el| el['data-record-id'] }.uniq.count
+    # Count turbo-frames with record_ IDs (one frame per row)
+    page.all('turbo-frame[id^="record_"]').count
   end
 end
 

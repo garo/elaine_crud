@@ -116,23 +116,25 @@ module ElaineCrud
         display_text = config.render_has_many_display(record, controller)
         foreign_key = config.has_many_config[:foreign_key]
         related_model_controller = config.has_many_config[:model].name.underscore.pluralize
-        
-        link_to display_text, 
+
+        link_to display_text,
                 url_for(controller: related_model_controller, action: :index, foreign_key => record.id),
-                class: "text-blue-600 hover:text-blue-800 underline"
+                class: "text-blue-600 hover:text-blue-800 underline",
+                data: { turbo_frame: "_top" }
       else
         # Fallback for auto-detected has_many
         related_records = record.public_send(field_name)
         count = related_records.respond_to?(:count) ? related_records.count : 0
-        
+
         if count > 0
           related_model = field_name.to_s.classify
           controller_name = field_name.to_s
           foreign_key = "#{record.class.name.underscore}_id"
-          
+
           link_to "#{count} #{field_name.to_s.humanize.downcase}",
                   url_for(controller: controller_name, action: :index, foreign_key => record.id),
-                  class: "text-blue-600 hover:text-blue-800 underline"
+                  class: "text-blue-600 hover:text-blue-800 underline",
+                  data: { turbo_frame: "_top" }
         else
           content_tag(:span, "No #{field_name.to_s.humanize.downcase}", class: 'text-gray-400')
         end
@@ -204,7 +206,7 @@ module ElaineCrud
       if context == :show && model_class
         items_html = related_records.map do |r|
           display_value = r.public_send(display_field)
-          link_to(display_value, polymorphic_path(r), class: "text-blue-600 hover:text-blue-800 hover:underline")
+          link_to(display_value, polymorphic_path(r), class: "text-blue-600 hover:text-blue-800 hover:underline", data: { turbo_frame: "_top" })
         end
 
         # Join with commas and proper spacing

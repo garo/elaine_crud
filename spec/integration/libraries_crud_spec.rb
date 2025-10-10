@@ -91,10 +91,10 @@ RSpec.describe 'Libraries CRUD', type: :feature do
       visit '/libraries'
       initial_count = Library.count
 
-      # Find and click the delete link for this specific library
-      # Use first() to get the first matching delete link for this record
-      delete_link = page.all("[data-record-id='record_#{library.id}'] a", text: 'Delete').first
-      delete_link.click
+      # Find delete link within the turbo-frame for this record
+      within("turbo-frame#record_#{library.id}") do
+        click_link 'Delete'
+      end
 
       expect(Library.count).to eq(initial_count - 1)
       expect(Library.exists?(library.id)).to be false

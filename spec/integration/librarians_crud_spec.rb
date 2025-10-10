@@ -109,8 +109,10 @@ RSpec.describe 'Librarians CRUD', type: :feature do
       visit '/librarians'
       initial_count = Librarian.count
 
-      delete_link = page.all("[data-record-id='record_#{librarian.id}'] a", text: 'Delete').first
-      delete_link.click
+      # Find delete link within the turbo-frame for this record
+      within("turbo-frame#record_#{librarian.id}") do
+        click_link 'Delete'
+      end
 
       expect(Librarian.count).to eq(initial_count - 1)
     end

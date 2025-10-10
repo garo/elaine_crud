@@ -88,8 +88,10 @@ RSpec.describe 'Members CRUD', type: :feature do
       visit '/members'
       initial_count = Member.count
 
-      delete_link = page.all("[data-record-id='record_#{member.id}'] a", text: 'Delete').first
-      delete_link.click
+      # Find delete link within the turbo-frame for this record
+      within("turbo-frame#record_#{member.id}") do
+        click_link 'Delete'
+      end
 
       expect(Member.count).to eq(initial_count - 1)
     end
