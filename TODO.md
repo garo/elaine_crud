@@ -78,6 +78,18 @@ This document tracks planned features and enhancements for ElaineCrud.
     - Relationship testing
     - Layout and UI testing
 
+11. **has_and_belongs_to_many (HABTM) Support**
+    - Minimal infrastructure approach for maximum flexibility
+    - Automatic detection via ActiveRecord reflections
+    - Minimal default display (comma-separated list)
+    - Checkbox form rendering with scrollable container
+    - Automatic parameter permitting for `*_ids` arrays
+    - N+1 query prevention with automatic includes
+    - Application-level customization via `display_as` callbacks
+    - Generic implementation (works for any HABTM: Students ↔ Courses, Users ↔ Roles, etc.)
+    - Fixed empty checkbox submission with hidden field pattern
+    - All variable naming is generic (no use-case specific hardcoding)
+
 ---
 
 ## 🚧 Planned Features
@@ -133,31 +145,8 @@ This document tracks planned features and enhancements for ElaineCrud.
 
 ### Medium Priority
 
-#### 3. has_and_belongs_to_many (HABTM) Support
-**Description**: Complete ActiveRecord association support with many-to-many relationships
 
-**Features**:
-- Automatic detection of HABTM relationships
-- Multi-select checkboxes or tag-style UI in forms
-- Display associated records in index view
-- Support for join table attributes (if using has_many :through)
-- N+1 query prevention
-
-**Benefits**:
-- Enables tags, categories, roles, permissions
-- Common pattern in Rails apps
-- Completes the association support story
-
-**Current Status**:
-- ✅ belongs_to
-- ✅ has_many
-- ✅ has_one
-- ❌ has_and_belongs_to_many
-- ❌ polymorphic
-
----
-
-#### 4. Bulk Actions
+#### 3. Bulk Actions
 **Description**: Enable operations on multiple records at once
 
 **Features**:
@@ -182,7 +171,7 @@ This document tracks planned features and enhancements for ElaineCrud.
 
 ---
 
-#### 5. Advanced Column Configuration
+#### 4. Advanced Column Configuration
 **Description**: Enhance column display and customization options
 
 **Features**:
@@ -202,7 +191,7 @@ This document tracks planned features and enhancements for ElaineCrud.
 
 ### Low Priority
 
-#### 6. Export Functionality
+#### 5. Export Functionality
 **Description**: Export records to various formats
 
 **Features**:
@@ -226,7 +215,7 @@ This document tracks planned features and enhancements for ElaineCrud.
 
 ---
 
-#### 7. Import Functionality
+#### 6. Import Functionality
 **Description**: Bulk import records from files
 
 **Features**:
@@ -244,7 +233,7 @@ This document tracks planned features and enhancements for ElaineCrud.
 
 ---
 
-#### 8. Polymorphic Association Support
+#### 7. Polymorphic Association Support
 **Description**: Support for polymorphic relationships
 
 **Features**:
@@ -262,7 +251,7 @@ This document tracks planned features and enhancements for ElaineCrud.
 
 ---
 
-#### 9. Nested Forms for has_many
+#### 8. Nested Forms for has_many
 **Description**: Edit child records inline when editing parent
 
 **Features**:
@@ -281,7 +270,7 @@ This document tracks planned features and enhancements for ElaineCrud.
 
 ---
 
-#### 10. Action Permissions/Authorization
+#### 9. Action Permissions/Authorization
 **Description**: Integrate with authorization frameworks
 
 **Features**:
@@ -298,7 +287,7 @@ This document tracks planned features and enhancements for ElaineCrud.
 
 ---
 
-#### 11. Audit Trail/Activity Log
+#### 10. Audit Trail/Activity Log
 **Description**: Track changes to records
 
 **Features**:
@@ -316,7 +305,7 @@ This document tracks planned features and enhancements for ElaineCrud.
 
 ---
 
-#### 12. Custom Actions
+#### 11. Custom Actions
 **Description**: Add custom actions beyond CRUD
 
 **Features**:
@@ -351,7 +340,7 @@ end
 
 ---
 
-#### 13. Dashboard/Stats Views
+#### 12. Dashboard/Stats Views
 **Description**: Summary views with statistics and charts
 
 **Features**:
@@ -368,7 +357,7 @@ end
 
 ---
 
-#### 14. Dark Mode Support
+#### 13. Dark Mode Support
 **Description**: Toggle between light and dark themes
 
 **Features**:
@@ -385,7 +374,7 @@ end
 
 ---
 
-#### 15. Mobile Responsive Improvements
+#### 14. Mobile Responsive Improvements
 **Description**: Enhance mobile experience
 
 **Features**:
@@ -461,8 +450,8 @@ end
 2. Validation Error Display
 
 **Schedule** (High Impact, High Effort):
-3. has_and_belongs_to_many Support
-4. Bulk Actions
+3. Bulk Actions
+4. Advanced Column Configuration
 
 **Consider** (Low Impact, Low Effort):
 5. Export Functionality

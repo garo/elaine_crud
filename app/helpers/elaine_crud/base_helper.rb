@@ -47,14 +47,12 @@ module ElaineCrud
         return display_has_one_value(record, field_name, config)
       end
 
-      # Handle has_and_belongs_to_many relationships
-      if config&.has_habtm? || is_habtm_relationship?(record, field_name)
-        return display_habtm_field(record, field_name, config)
-      end
-
-      # If field has custom display configuration, use it
+      # If field has custom display configuration, use it first (allows overriding defaults)
       if config&.has_custom_display?
-        config.render_display_value(record, controller)
+        return config.render_display_value(record, controller)
+      # Handle has_and_belongs_to_many relationships with default display
+      elsif config&.has_habtm? || is_habtm_relationship?(record, field_name)
+        return display_habtm_field(record, field_name, config)
       elsif config&.has_foreign_key?
         # TODO: Implement foreign key display logic
         # Should load the related record and format it according to foreign_key config

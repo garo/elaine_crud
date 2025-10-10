@@ -43,7 +43,7 @@ class BooksController < ElaineCrud::BaseController
 
       # Handle empty case with styled placeholder
       if tags.empty?
-        return content_tag(:span, "No tags", class: "text-gray-400 italic text-sm")
+        next content_tag(:span, "No tags", class: "text-gray-400 italic text-sm")
       end
 
       # Render each tag as a colored badge using the tag's color field
