@@ -7,6 +7,7 @@ class LibrariesController < ElaineCrud::BaseController
 
   # Default sorting by name
   default_sort column: :name, direction: :asc
+  show_view_button
 
   # Customize email field display
   field :email do |f|

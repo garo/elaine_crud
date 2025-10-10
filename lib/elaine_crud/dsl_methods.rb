@@ -9,7 +9,10 @@ module ElaineCrud
     included do
       class_attribute :crud_model, :permitted_attributes, :column_configurations,
                       :field_configurations, :default_sort_column, :default_sort_direction,
-                      :disable_turbo_frames
+                      :disable_turbo_frames, :show_view_action_button
+
+      # Default: View button is disabled
+      self.show_view_action_button = false
     end
 
     class_methods do
@@ -114,6 +117,12 @@ module ElaineCrud
       # When disabled, edit links will navigate to full page instead of inline editing
       def disable_turbo
         self.disable_turbo_frames = true
+      end
+
+      # Enable the "View" button in the actions column for index/list views
+      # @param enabled [Boolean] Whether to show the View button (default: true)
+      def show_view_button(enabled = true)
+        self.show_view_action_button = enabled
       end
 
       # Automatically configure foreign key fields based on belongs_to relationships

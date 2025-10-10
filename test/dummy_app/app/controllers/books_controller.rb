@@ -6,6 +6,7 @@ class BooksController < ElaineCrud::BaseController
   permit_params :title, :isbn, :publication_year, :pages, :description, :available, :price
 
   default_sort column: :title, direction: :asc
+  show_view_button
 
   # Currency field
   field :price do |f|

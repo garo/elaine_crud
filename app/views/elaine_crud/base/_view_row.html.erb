@@ -31,6 +31,11 @@
     <% actions_border_bottom = has_multiple_rows ? '' : (is_last_record ? '' : 'border-b') %>
     <div class="px-3 py-3 text-sm text-gray-500 border-gray-200 <%= row_bg_class %> hover:bg-blue-50 <%= actions_border_bottom %> <%= 'row-span-' + record_layout.length.to_s if record_layout.length > 1 %>" data-record-id="<%= record_id %>">
       <div class="flex space-x-2">
+        <% if controller.class.show_view_action_button %>
+          <%= link_to "View",
+              url_for(action: :show, id: record.id),
+              class: "text-blue-600 hover:text-blue-900" %>
+        <% end %>
         <%= link_to "Edit",
             url_for(action: :edit, id: record.id, page: params[:page], per_page: params[:per_page]),
             class: "text-green-600 hover:text-green-900",

@@ -6,6 +6,7 @@ class AuthorsController < ElaineCrud::BaseController
   permit_params :name, :biography, :birth_year, :country, :active
 
   default_sort column: :name, direction: :asc
+  show_view_button
 
   # Custom display for active status
   field :active do |f|
