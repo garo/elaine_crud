@@ -22,7 +22,7 @@
             <%= field_title(column.to_sym) %>
           </dt>
           <dd class="text-sm text-gray-900">
-            <%= display_field_value(@record, column.to_sym) %>
+            <%= display_field_value(@record, column.to_sym, context: :show) %>
           </dd>
           <% if field_description(column.to_sym).present? %>
             <p class="text-xs text-gray-400 mt-1">

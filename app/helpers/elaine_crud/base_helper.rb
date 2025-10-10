@@ -33,8 +33,9 @@ module ElaineCrud
     # Display field value using new field configuration system
     # @param record [ActiveRecord::Base] The record to display
     # @param field_name [Symbol] The field name
+    # @param context [Symbol] The display context (:index or :show)
     # @return [String] The formatted value
-    def display_field_value(record, field_name)
+    def display_field_value(record, field_name, context: :index)
       config = controller.field_config_for(field_name)
 
       # Handle has_many relationships
@@ -52,7 +53,7 @@ module ElaineCrud
         return config.render_display_value(record, controller)
       # Handle has_and_belongs_to_many relationships with default display
       elsif config&.has_habtm? || is_habtm_relationship?(record, field_name)
-        return display_habtm_field(record, field_name, config)
+        return display_habtm_field(record, field_name, config, context: context)
       elsif config&.has_foreign_key?
         # TODO: Implement foreign key display logic
         # Should load the related record and format it according to foreign_key config
@@ -186,20 +187,36 @@ module ElaineCrud
     # @param field_name [Symbol] The field name
     # @param config [FieldConfiguration] The field configuration
     # @return [String] The formatted HABTM value
-    def display_habtm_field(record, field_name, config)
+    def display_habtm_field(record, field_name, config, context: :index)
       related_records = record.public_send(field_name)
 
       return content_tag(:span, "—", class: "text-gray-400") if related_records.empty?
 
-      # Basic display: comma-separated list of first few items
+      # Get configuration
       habtm_config = config&.habtm_config || {}
       display_field = habtm_config[:display_field] || :name
 
-      preview_items = related_records.first(3).map { |r| r.public_send(display_field) }
-      preview_text = preview_items.join(", ")
-      preview_text += ", ..." if related_records.count > 3
+      # Determine the model class for the association
+      association_name = field_name.to_s.singularize
+      model_class = association_name.classify.constantize rescue nil
 
-      content_tag(:span, preview_text, class: "text-sm text-gray-900")
+      # In show context, display full list with links
+      if context == :show && model_class
+        items_html = related_records.map do |r|
+          display_value = r.public_send(display_field)
+          link_to(display_value, polymorphic_path(r), class: "text-blue-600 hover:text-blue-800 hover:underline")
+        end
+
+        # Join with commas and proper spacing
+        safe_join(items_html, ", ")
+      else
+        # In index context, use compact display: comma-separated list of first few items
+        preview_items = related_records.first(3).map { |r| r.public_send(display_field) }
+        preview_text = preview_items.join(", ")
+        preview_text += ", ..." if related_records.count > 3
+
+        content_tag(:span, preview_text, class: "text-sm text-gray-900")
+      end
     rescue => e
       Rails.logger.error "ElaineCrud: Error rendering HABTM field #{field_name}: #{e.message}"
       content_tag(:span, "Error loading relationships", class: 'text-red-400')
