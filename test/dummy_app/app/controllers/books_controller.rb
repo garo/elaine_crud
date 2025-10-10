@@ -27,10 +27,11 @@ class BooksController < ElaineCrud::BaseController
     }
   end
 
-  # Foreign keys auto-detected: author_id, library_id
+  # Foreign keys auto-detected: author_id
   # Automatically shows dropdowns in forms and names in index
 
-  # has_many :loans automatically shown with count
+  # has_many :book_copies automatically shown with count
+  # has_many :loans through :book_copies
 
   # has_and_belongs_to_many :tags - custom polished display
   # This showcases how developers can build on ElaineCrud's minimal HABTM infrastructure
@@ -70,13 +71,12 @@ class BooksController < ElaineCrud::BaseController
   # Custom two-row layout for better content display
   def calculate_layout(content, fields)
     # Row 1: All regular fields displayed normally (each takes 1 column)
-    # Row 2: Description spans most columns, with loans info at the end
+    # Row 2: Description spans most columns, with tags and book_copies info
 
     row1 = [
       { field_name: :title, colspan: 1, rowspan: 1 },
       { field_name: :isbn, colspan: 1, rowspan: 1 },
       { field_name: :author_id, colspan: 1, rowspan: 1 },
-      { field_name: :library_id, colspan: 1, rowspan: 1 },
       { field_name: :publication_year, colspan: 1, rowspan: 1 },
       { field_name: :pages, colspan: 1, rowspan: 1 },
       { field_name: :price, colspan: 1, rowspan: 1 },
@@ -84,9 +84,9 @@ class BooksController < ElaineCrud::BaseController
     ]
 
     row2 = [
-      { field_name: :description, colspan: 4, rowspan: 1 },
+      { field_name: :description, colspan: 3, rowspan: 1 },
       { field_name: :tags, colspan: 3, rowspan: 1 },
-      { field_name: :loans, colspan: 1, rowspan: 1 }
+      { field_name: :book_copies, colspan: 1, rowspan: 1 }
     ]
 
     [row1, row2]
@@ -96,16 +96,15 @@ class BooksController < ElaineCrud::BaseController
   # Header only shows fields from row 1, as row 2 fields span across those columns
   def calculate_layout_header(fields)
     # Only include fields that appear in row 1 (the actual column structure)
-    header_fields = [:title, :isbn, :author_id, :library_id, :publication_year, :pages, :price, :available]
+    header_fields = [:title, :isbn, :author_id, :publication_year, :pages, :price, :available]
     header_fields << "ROW-ACTIONS"
 
     header_fields.map do |field_name|
       # Using minmax() allows columns to expand when content is too large
       width = case field_name.to_s
-              when 'title' then "minmax(120px, 1.4fr)"
+              when 'title' then "minmax(120px, 1.5fr)"
               when 'isbn' then "minmax(90px, 1fr)"
-              when 'author_id' then "minmax(100px, 1.1fr)"
-              when 'library_id' then "minmax(100px, 1.1fr)"
+              when 'author_id' then "minmax(100px, 1.2fr)"
               when 'publication_year' then "minmax(70px, 0.8fr)"
               when 'pages' then "minmax(60px, 0.6fr)"
               when 'price' then "minmax(70px, 0.7fr)"

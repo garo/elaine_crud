@@ -8,6 +8,7 @@ Rails.application.routes.draw do
   resources :libraries
   resources :authors
   resources :books
+  resources :book_copies
   resources :tags
   resources :members
   resources :loans

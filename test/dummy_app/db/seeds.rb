@@ -1,6 +1,7 @@
 # Clear existing data
 puts "Clearing existing data..."
 Loan.destroy_all
+BookCopy.destroy_all
 Profile.destroy_all
 Book.destroy_all
 Tag.destroy_all
@@ -92,17 +93,14 @@ tags = [
 
 puts "Creating books..."
 books = [
-  # Central City Library
   Book.create!(
     title: "Pride and Prejudice",
     isbn: "978-0-14-143951-8",
     publication_year: 1813,
     pages: 432,
     description: "A romantic novel of manners",
-    available: true,
     price: 12.99,
-    author: authors[0],
-    library: libraries[0]
+    author: authors[0]
   ),
   Book.create!(
     title: "1984",
@@ -110,10 +108,8 @@ books = [
     publication_year: 1949,
     pages: 328,
     description: "A dystopian social science fiction novel",
-    available: false,
     price: 15.99,
-    author: authors[1],
-    library: libraries[0]
+    author: authors[1]
   ),
   Book.create!(
     title: "Beloved",
@@ -121,23 +117,17 @@ books = [
     publication_year: 1987,
     pages: 324,
     description: "A novel about the aftermath of slavery",
-    available: true,
     price: 16.99,
-    author: authors[2],
-    library: libraries[0]
+    author: authors[2]
   ),
-
-  # Riverside Library
   Book.create!(
     title: "Norwegian Wood",
     isbn: "978-0-375-70461-8",
     publication_year: 1987,
     pages: 296,
     description: "A nostalgic story of loss and sexuality",
-    available: true,
     price: 14.99,
-    author: authors[3],
-    library: libraries[1]
+    author: authors[3]
   ),
   Book.create!(
     title: "Kafka on the Shore",
@@ -145,23 +135,17 @@ books = [
     publication_year: 2002,
     pages: 480,
     description: "A metaphysical reality novel",
-    available: true,
     price: 16.99,
-    author: authors[3],
-    library: libraries[1]
+    author: authors[3]
   ),
-
-  # Oakwood Library
   Book.create!(
     title: "Americanah",
     isbn: "978-0-307-45592-7",
     publication_year: 2013,
     pages: 477,
     description: "A novel about race, identity, and love",
-    available: false,
     price: 17.99,
-    author: authors[4],
-    library: libraries[2]
+    author: authors[4]
   ),
   Book.create!(
     title: "Half of a Yellow Sun",
@@ -169,10 +153,8 @@ books = [
     publication_year: 2006,
     pages: 448,
     description: "A novel set during the Nigerian Civil War",
-    available: true,
     price: 16.99,
-    author: authors[4],
-    library: libraries[2]
+    author: authors[4]
   ),
   Book.create!(
     title: "Animal Farm",
@@ -180,12 +162,50 @@ books = [
     publication_year: 1945,
     pages: 112,
     description: "An allegorical novella about Stalinism",
-    available: true,
     price: 11.99,
-    author: authors[1],
-    library: libraries[2]
+    author: authors[1]
   )
 ]
+
+puts "Creating book copies..."
+book_copies = []
+
+# Create multiple copies for each book across different libraries
+# Pride and Prejudice - 3 copies across 2 libraries
+book_copies << BookCopy.create!(book: books[0], library: libraries[0], rfid: "RFID-PPR-001", available: true)
+book_copies << BookCopy.create!(book: books[0], library: libraries[0], rfid: "RFID-PPR-002", available: true)
+book_copies << BookCopy.create!(book: books[0], library: libraries[1], rfid: "RFID-PPR-003", available: true)
+
+# 1984 - 4 copies (one will be loaned out)
+book_copies << BookCopy.create!(book: books[1], library: libraries[0], rfid: "RFID-1984-001", available: false)
+book_copies << BookCopy.create!(book: books[1], library: libraries[0], rfid: "RFID-1984-002", available: true)
+book_copies << BookCopy.create!(book: books[1], library: libraries[1], rfid: "RFID-1984-003", available: true)
+book_copies << BookCopy.create!(book: books[1], library: libraries[2], rfid: "RFID-1984-004", available: true)
+
+# Beloved - 2 copies
+book_copies << BookCopy.create!(book: books[2], library: libraries[0], rfid: "RFID-BLV-001", available: true)
+book_copies << BookCopy.create!(book: books[2], library: libraries[2], rfid: "RFID-BLV-002", available: true)
+
+# Norwegian Wood - 2 copies
+book_copies << BookCopy.create!(book: books[3], library: libraries[1], rfid: "RFID-NW-001", available: true)
+book_copies << BookCopy.create!(book: books[3], library: libraries[1], rfid: "RFID-NW-002", available: true)
+
+# Kafka on the Shore - 2 copies
+book_copies << BookCopy.create!(book: books[4], library: libraries[1], rfid: "RFID-KOS-001", available: true)
+book_copies << BookCopy.create!(book: books[4], library: libraries[2], rfid: "RFID-KOS-002", available: true)
+
+# Americanah - 2 copies (one will be loaned out)
+book_copies << BookCopy.create!(book: books[5], library: libraries[2], rfid: "RFID-AMR-001", available: false)
+book_copies << BookCopy.create!(book: books[5], library: libraries[2], rfid: "RFID-AMR-002", available: true)
+
+# Half of a Yellow Sun - 2 copies
+book_copies << BookCopy.create!(book: books[6], library: libraries[2], rfid: "RFID-HYS-001", available: true)
+book_copies << BookCopy.create!(book: books[6], library: libraries[0], rfid: "RFID-HYS-002", available: true)
+
+# Animal Farm - 3 copies
+book_copies << BookCopy.create!(book: books[7], library: libraries[2], rfid: "RFID-AF-001", available: true)
+book_copies << BookCopy.create!(book: books[7], library: libraries[0], rfid: "RFID-AF-002", available: true)
+book_copies << BookCopy.create!(book: books[7], library: libraries[1], rfid: "RFID-AF-003", available: true)
 
 puts "Creating members..."
 members = [
@@ -251,30 +271,34 @@ members = [
 ]
 
 puts "Creating loans..."
+# 1984 copy 1 - checked out to Alice
 Loan.create!(
-  book: books[1], # 1984 (checked out)
+  book_copy: book_copies[3], # RFID-1984-001
   member: members[0], # Alice
   due_date: Date.today + 14.days,
   status: 'active'
 )
 
+# Americanah copy 1 - checked out to Frank
 Loan.create!(
-  book: books[5], # Americanah (checked out)
+  book_copy: book_copies[13], # RFID-AMR-001
   member: members[5], # Frank
   due_date: Date.today + 7.days,
   status: 'active'
 )
 
+# Pride and Prejudice copy 1 - returned by Bob
 Loan.create!(
-  book: books[0], # Pride and Prejudice (returned)
+  book_copy: book_copies[0], # RFID-PPR-001
   member: members[1], # Bob
   due_date: Date.today - 30.days,
   returned_at: DateTime.now - 3.days,
   status: 'returned'
 )
 
+# Beloved copy 1 - overdue for Carol
 Loan.create!(
-  book: books[2], # Beloved (overdue)
+  book_copy: book_copies[7], # RFID-BLV-001
   member: members[2], # Carol
   due_date: Date.today - 5.days,
   status: 'overdue'
@@ -377,6 +401,7 @@ puts "Summary:"
 puts "  Libraries: #{Library.count}"
 puts "  Authors: #{Author.count}"
 puts "  Books: #{Book.count}"
+puts "  Book Copies: #{BookCopy.count}"
 puts "  Tags: #{Tag.count}"
 puts "  Members: #{Member.count}"
 puts "  Profiles: #{Profile.count}"

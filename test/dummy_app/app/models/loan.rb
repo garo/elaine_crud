@@ -1,6 +1,9 @@
 class Loan < ApplicationRecord
-  belongs_to :book
+  belongs_to :book_copy
   belongs_to :member
+
+  # Delegate to get book information through book_copy
+  delegate :book, :library, to: :book_copy
 
   validates :due_date, presence: true
   validates :status, inclusion: { in: %w[pending active returned overdue] }

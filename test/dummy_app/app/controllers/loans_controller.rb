@@ -46,6 +46,7 @@ class LoansController < ElaineCrud::BaseController
     }
   end
 
-  # Foreign keys: book_id, member_id auto-configured
+  # Foreign keys: book_copy_id, member_id auto-configured
   # Parent filtering works: /loans?member_id=1 shows loans for that member
+  # Can also filter by book_copy: /loans?book_copy_id=1
 end

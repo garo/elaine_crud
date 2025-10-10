@@ -1,5 +1,6 @@
 class Library < ApplicationRecord
-  has_many :books, dependent: :destroy
+  has_many :book_copies, dependent: :destroy
+  has_many :books, through: :book_copies
   has_many :members, dependent: :destroy
   has_many :librarians, dependent: :destroy
 

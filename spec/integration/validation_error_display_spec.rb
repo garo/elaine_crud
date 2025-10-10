@@ -88,7 +88,7 @@ RSpec.describe 'Validation Error Display', type: :feature do
   describe 'Uniqueness validation errors' do
     let!(:library) { Library.create!(name: 'Test Library', city: 'Test City', state: 'TS', phone: '555-0100', email: 'test@test.com') }
     let!(:author) { Author.create!(name: 'Test Author') }
-    let!(:existing_book) { Book.create!(title: 'Existing Book', isbn: '999-888-777', author: author, library: library) }
+    let!(:existing_book) { Book.create!(title: 'Existing Book', isbn: '999-888-777', author: author) }
 
     it 'displays uniqueness validation error' do
       visit '/books/new'

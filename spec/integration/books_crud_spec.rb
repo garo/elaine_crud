@@ -50,7 +50,7 @@ RSpec.describe 'Books CRUD', type: :feature do
       expect(page).to have_field('book[title]')
       expect(page).to have_field('book[isbn]')
       expect(page).to have_select('book[author_id]')
-      expect(page).to have_select('book[library_id]')
+      # Books no longer have library_id - library is associated through book_copies
     end
 
     it 'creates a new book successfully' do
@@ -59,7 +59,7 @@ RSpec.describe 'Books CRUD', type: :feature do
       fill_in 'book[title]', with: 'Test Book'
       fill_in 'book[isbn]', with: '978-0-123-45678-9'
       select Author.first.name, from: 'book[author_id]'
-      select Library.first.name, from: 'book[library_id]'
+      # Books no longer have library_id
       fill_in 'book[publication_year]', with: '2024'
       fill_in 'book[pages]', with: '300'
       fill_in 'book[price]', with: '19.99'
@@ -100,11 +100,9 @@ RSpec.describe 'Books CRUD', type: :feature do
         title: 'Book to Delete',
         isbn: '978-0-999-99999-9',
         author: Author.first,
-        library: Library.first,
         publication_year: 2024,
         pages: 100,
-        price: 9.99,
-        available: true
+        price: 9.99
       )
 
       visit '/books'

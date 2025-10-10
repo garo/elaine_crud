@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_09_110827) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_10_065720) do
   create_table "authors", force: :cascade do |t|
     t.string "name", null: false
     t.text "biography"
@@ -22,6 +22,18 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_09_110827) do
     t.index ["name"], name: "index_authors_on_name"
   end
 
+  create_table "book_copies", force: :cascade do |t|
+    t.integer "book_id", null: false
+    t.integer "library_id", null: false
+    t.string "rfid", null: false
+    t.boolean "available", default: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["book_id"], name: "index_book_copies_on_book_id"
+    t.index ["library_id"], name: "index_book_copies_on_library_id"
+    t.index ["rfid"], name: "index_book_copies_on_rfid", unique: true
+  end
+
   create_table "books", force: :cascade do |t|
     t.string "title", null: false
     t.string "isbn", null: false
@@ -31,12 +43,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_09_110827) do
     t.boolean "available", default: true
     t.decimal "price", precision: 10, scale: 2
     t.integer "author_id", null: false
-    t.integer "library_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["author_id"], name: "index_books_on_author_id"
     t.index ["isbn"], name: "index_books_on_isbn", unique: true
-    t.index ["library_id"], name: "index_books_on_library_id"
     t.index ["title"], name: "index_books_on_title"
   end
 
@@ -78,11 +88,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_09_110827) do
     t.date "due_date", null: false
     t.datetime "returned_at"
     t.string "status", default: "pending", null: false
-    t.integer "book_id", null: false
     t.integer "member_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["book_id"], name: "index_loans_on_book_id"
+    t.integer "book_copy_id", null: false
+    t.index ["book_copy_id"], name: "index_loans_on_book_copy_id"
     t.index ["due_date"], name: "index_loans_on_due_date"
     t.index ["member_id"], name: "index_loans_on_member_id"
     t.index ["status"], name: "index_loans_on_status"
@@ -120,12 +130,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_09_110827) do
     t.index ["name"], name: "index_tags_on_name", unique: true
   end
 
+  add_foreign_key "book_copies", "books"
+  add_foreign_key "book_copies", "libraries"
   add_foreign_key "books", "authors"
-  add_foreign_key "books", "libraries"
   add_foreign_key "books_tags", "books"
   add_foreign_key "books_tags", "tags"
   add_foreign_key "librarians", "libraries"
-  add_foreign_key "loans", "books"
+  add_foreign_key "loans", "book_copies"
   add_foreign_key "loans", "members"
   add_foreign_key "members", "libraries"
   add_foreign_key "profiles", "members"
