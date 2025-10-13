@@ -90,63 +90,71 @@ This document tracks planned features and enhancements for ElaineCrud.
     - Fixed empty checkbox submission with hidden field pattern
     - All variable naming is generic (no use-case specific hardcoding)
 
+12. **Search and Filtering**
+    - Global text search across searchable columns
+    - Per-column filtering (dropdown filters, date ranges)
+    - URL parameter support (`?q=search`, `?filter[status]=active`)
+    - Clear filters functionality
+    - Search persistence across pagination and sorting
+    - Configurable via DSL (`searchable: true/false`, `filterable: true/false`)
+    - Smart filtering for belongs_to relationships (dropdown of related records)
+    - Search result count display
+    - Empty state handling with "Clear search" action
+    - Works seamlessly with existing sorting and pagination
+
+13. **Validation Error Display**
+    - Inline field-level error messages in forms
+    - Red border highlighting for invalid fields
+    - Form data preservation on validation failure
+    - Error display in inline edit mode (Turbo Frames)
+    - Proper error handling for create/update actions
+    - Validation errors shown with proper styling
+
+14. **Custom View Partials for Extensibility**
+    - `_index_table.html.erb` - Reusable table component
+    - `_show_details.html.erb` - Reusable detail display component
+    - Support for `show_actions: false` parameter to hide action buttons
+    - Demonstrates ElaineCrud's composability for custom views
+    - Example implementation in test app (libraries show page with computed stats and sub-tables)
+
+15. **Row-level Turbo Frame Architecture**
+    - Simplified from column-level to row-level frames
+    - More efficient DOM updates
+    - Better code organization
+    - Turbo Frame wraps entire row with `class="contents"` for CSS Grid compatibility
+
+16. **Delete Functionality Improvements**
+    - Changed from `link_to` to `button_to` for proper DELETE requests
+    - JavaScript confirmation dialogs (`onsubmit="return confirm(...)"`)
+    - Form-based deletion with `data: { turbo: false }` to force full page reload
+    - HTTP 303 See Other redirects after POST/PATCH/DELETE to prevent method preservation
+    - No "Content missing" errors on successful deletion
+
+17. **Custom 404 Error Pages**
+    - Beautiful, branded 404 page for missing records
+    - Shows model name, resource ID, and helpful context
+    - Action buttons: "View All [Models]", "Create New [Model]", "Go Back"
+    - Consistent with ElaineCrud's design language (top-left layout, not centered)
+    - Proper HTTP 404 status code
+    - JSON response support for API requests
+
+18. **Code Quality Improvements**
+    - Removed legacy inline editing mode (dead code)
+    - Simplified index view by using reusable `_index_table` partial
+    - Fixed array mutation bug in `calculate_layout_header`
+    - Comprehensive test coverage (82 examples, 0 failures)
+
 ---
 
 ## 🚧 Planned Features
 
 ### High Priority
 
-#### 1. Search/Filtering
-**Description**: Add search and filtering capabilities to find specific records
-
-**Features**:
-- Global text search across displayed columns
-- Per-column filtering (status, categories, date ranges)
-- URL parameter support (`?search=term`, `?filter[status]=active`)
-- Clear filters button
-- Search persistence across pagination
-- Highlight search terms in results (optional)
-
-**Benefits**:
-- Essential for admin interfaces with large datasets
-- Works naturally with existing sorting and pagination
-- High user value for finding specific records
-
-**Implementation Notes**:
-- Add search form to index view
-- Extend `fetch_records` to apply search conditions
-- URL parameter handling similar to sort/pagination
-- Consider using `ransack` gem or custom implementation
-
----
-
-#### 2. Validation Error Display
-**Description**: Improve form validation error handling and display
-
-**Features**:
-- Inline field-level error messages
-- Summary of errors at top of form
-- Highlight invalid fields with red borders
-- Preserve form data on validation failure
-- Error messages for custom validations
-
-**Benefits**:
-- Better UX for form submissions
-- Clear feedback on what needs to be fixed
-- Professional error handling
-
-**Implementation Notes**:
-- Enhance new/edit form templates
-- Add error styling with TailwindCSS
-- Helper methods for error rendering
-- Test with various validation scenarios
-
 ---
 
 ### Medium Priority
 
-
-#### 3. Bulk Actions
+#### 1. Bulk Actions
 **Description**: Enable operations on multiple records at once
 
 **Features**:
@@ -171,7 +179,7 @@ This document tracks planned features and enhancements for ElaineCrud.
 
 ---
 
-#### 4. Advanced Column Configuration
+#### 2. Advanced Column Configuration
 **Description**: Enhance column display and customization options
 
 **Features**:
@@ -191,7 +199,7 @@ This document tracks planned features and enhancements for ElaineCrud.
 
 ### Low Priority
 
-#### 5. Export Functionality
+#### 3. Export Functionality
 **Description**: Export records to various formats
 
 **Features**:
@@ -215,7 +223,7 @@ This document tracks planned features and enhancements for ElaineCrud.
 
 ---
 
-#### 6. Import Functionality
+#### 4. Import Functionality
 **Description**: Bulk import records from files
 
 **Features**:
@@ -233,7 +241,7 @@ This document tracks planned features and enhancements for ElaineCrud.
 
 ---
 
-#### 7. Polymorphic Association Support
+#### 5. Polymorphic Association Support
 **Description**: Support for polymorphic relationships
 
 **Features**:
@@ -251,7 +259,7 @@ This document tracks planned features and enhancements for ElaineCrud.
 
 ---
 
-#### 8. Nested Forms for has_many
+#### 6. Nested Forms for has_many
 **Description**: Edit child records inline when editing parent
 
 **Features**:
@@ -270,7 +278,7 @@ This document tracks planned features and enhancements for ElaineCrud.
 
 ---
 
-#### 9. Action Permissions/Authorization
+#### 7. Action Permissions/Authorization
 **Description**: Integrate with authorization frameworks
 
 **Features**:
@@ -287,7 +295,7 @@ This document tracks planned features and enhancements for ElaineCrud.
 
 ---
 
-#### 10. Audit Trail/Activity Log
+#### 8. Audit Trail/Activity Log
 **Description**: Track changes to records
 
 **Features**:
@@ -305,7 +313,7 @@ This document tracks planned features and enhancements for ElaineCrud.
 
 ---
 
-#### 11. Custom Actions
+#### 9. Custom Actions
 **Description**: Add custom actions beyond CRUD
 
 **Features**:
@@ -340,7 +348,7 @@ end
 
 ---
 
-#### 12. Dashboard/Stats Views
+#### 10. Dashboard/Stats Views
 **Description**: Summary views with statistics and charts
 
 **Features**:
@@ -357,7 +365,7 @@ end
 
 ---
 
-#### 13. Dark Mode Support
+#### 11. Dark Mode Support
 **Description**: Toggle between light and dark themes
 
 **Features**:
@@ -374,7 +382,7 @@ end
 
 ---
 
-#### 14. Mobile Responsive Improvements
+#### 12. Mobile Responsive Improvements
 **Description**: Enhance mobile experience
 
 **Features**:
@@ -446,21 +454,21 @@ end
 ## Priority Matrix
 
 **Do First** (High Impact, Low Effort):
-1. Search/Filtering
-2. Validation Error Display
+1. ~~Search/Filtering~~ ✅ **COMPLETED**
+2. ~~Validation Error Display~~ ✅ **COMPLETED**
 
 **Schedule** (High Impact, High Effort):
-3. Bulk Actions
-4. Advanced Column Configuration
+1. Bulk Actions
+2. Advanced Column Configuration
 
 **Consider** (Low Impact, Low Effort):
-5. Export Functionality
-6. Dark Mode Support
+1. Export Functionality
+2. Dark Mode Support
 
 **Defer** (Low Impact, High Effort):
-7. Nested Forms
-8. Audit Trail
-9. Dashboard Views
+1. Nested Forms
+2. Audit Trail
+3. Dashboard Views
 
 ---
 
