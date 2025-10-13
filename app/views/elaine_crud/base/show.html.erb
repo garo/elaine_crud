@@ -11,36 +11,21 @@
     </div>
   </div>
 
-  <div class="bg-white shadow-md rounded-lg p-6">
-    <%# TODO: Implement show view using field configuration system %>
-    <%# Should display all fields with their configured titles and custom display %>
-    <%# Should handle readonly fields and foreign key relationships %>
-    <div class="space-y-4">
-      <% @columns.each do |column| %>
-        <div class="border-b border-gray-200 pb-4">
-          <dt class="text-sm font-medium text-gray-500 mb-1">
-            <%= field_title(column.to_sym) %>
-          </dt>
-          <dd class="text-sm text-gray-900">
-            <%= display_field_value(@record, column.to_sym, context: :show) %>
-          </dd>
-          <% if field_description(column.to_sym).present? %>
-            <p class="text-xs text-gray-400 mt-1">
-              <%= field_description(column.to_sym) %>
-            </p>
-          <% end %>
-        </div>
-      <% end %>
-    </div>
+  <%= render partial: 'elaine_crud/base/show_details', locals: { record: @record, columns: @columns } %>
 
-    <div class="mt-8 flex justify-end space-x-3">
+  <div class="bg-white shadow-md rounded-lg p-6 mt-6">
+    <div class="flex justify-end space-x-3">
       <%= link_to "Edit #{@model_name}", 
           url_for(action: :edit, id: @record.id), 
           class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" %>
-      <%= link_to "Delete #{@model_name}", 
-          url_for(action: :destroy, id: @record.id), 
+<%= button_to "Delete #{@model_name}",
+          url_for(action: :destroy, id: @record.id),
           method: :delete,
-          data: { confirm: "Are you sure you want to delete this #{@model_name.downcase}?" },
+          form: {
+            class: "inline",
+            data: { turbo: false },
+            onsubmit: "return confirm('Are you sure you want to delete this #{@model_name.downcase}?');"
+          },
           class: "bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded" %>
     </div>
   </div>

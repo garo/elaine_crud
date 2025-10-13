@@ -73,7 +73,7 @@ module ElaineCrud
 
       if @record.save
         # Redirect back to filtered view if came from parent context
-        redirect_to redirect_after_create_path, notice: "#{crud_model.name} was successfully created."
+        redirect_to redirect_after_create_path, notice: "#{crud_model.name} was successfully created.", status: :see_other
       else
         @model_name = crud_model.name
         render 'elaine_crud/base/new', status: :unprocessable_entity
@@ -127,9 +127,9 @@ module ElaineCrud
           render partial: 'elaine_crud/base/view_row', locals: { record: @record, columns: @columns, row_bg_class: 'bg-white', is_last_record: false }
         elsif params[:from_inline_edit]
           # Legacy inline edit mode (will be deprecated)
-          redirect_to polymorphic_path([crud_model], page: params[:page], per_page: params[:per_page]), notice: "#{crud_model.name} was successfully updated."
+          redirect_to polymorphic_path([crud_model], page: params[:page], per_page: params[:per_page]), notice: "#{crud_model.name} was successfully updated.", status: :see_other
         else
-          redirect_to polymorphic_path(@record), notice: "#{crud_model.name} was successfully updated."
+          redirect_to polymorphic_path(@record), notice: "#{crud_model.name} was successfully updated.", status: :see_other
         end
       else
         # Handle validation errors
@@ -181,7 +181,7 @@ module ElaineCrud
     def destroy
       @record = find_record
       @record.destroy
-      redirect_to polymorphic_path(crud_model), notice: "#{crud_model.name} was successfully deleted."
+      redirect_to polymorphic_path(crud_model), notice: "#{crud_model.name} was successfully deleted.", status: :see_other
     end
 
     private

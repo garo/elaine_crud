@@ -28,5 +28,24 @@ class LibrariesController < ElaineCrud::BaseController
   # has_many relationships auto-detected and displayed
   # Shows: books, members, librarians with counts
 
+  # Override show to add custom computed statistics and sub-table data
+  def show
+    # Set up base instance variables (same as ElaineCrud::BaseController#show)
+    @record = find_record
+    @model_name = crud_model.name
+    @columns = determine_columns
 
+    # Computed statistics for the instruction text
+    @total_book_copies = @record.book_copies.count
+    @unique_books = @record.books.distinct.count
+    @available_copies = @record.book_copies.where(available: true).count
+    @active_members = @record.members.where(active: true).count
+
+    # Data for librarians sub-table
+    @librarians = @record.librarians.order(:name)
+    @librarian_columns = [:name, :email, :role, :salary]
+
+    # Render custom view instead of default
+    render 'libraries/show'
+  end
 end

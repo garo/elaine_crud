@@ -1,0 +1,29 @@
+<%# Reusable field details display for show views %>
+<%# Required locals: record, columns %>
+<%# Optional locals: title (string, default: nil) %>
+
+<% title = local_assigns.fetch(:title, nil) %>
+
+<div class="bg-white shadow-md rounded-lg p-6">
+  <% if title %>
+    <h2 class="text-xl font-bold text-gray-900 mb-4"><%= title %></h2>
+  <% end %>
+
+  <div class="space-y-4">
+    <% columns.each do |column| %>
+      <div class="border-b border-gray-200 pb-4">
+        <dt class="text-sm font-medium text-gray-500 mb-1">
+          <%= field_title(column.to_sym) %>
+        </dt>
+        <dd class="text-sm text-gray-900">
+          <%= display_field_value(record, column.to_sym, context: :show) %>
+        </dd>
+        <% if field_description(column.to_sym).present? %>
+          <p class="text-xs text-gray-400 mt-1">
+            <%= field_description(column.to_sym) %>
+          </p>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>

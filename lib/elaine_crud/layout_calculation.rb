@@ -34,9 +34,10 @@ module ElaineCrud
     def calculate_layout_header(fields)
       # Default implementation: flexible columns that can expand to fit content
       # Using minmax() allows columns to grow beyond their base size when content requires it
-      fields << "ROW-ACTIONS"
+      # Note: Create a new array to avoid mutating the input
+      all_fields = fields + ["ROW-ACTIONS"]
 
-      fields.map do |field_name|
+      all_fields.map do |field_name|
         width = case field_name.to_s
           when 'id' then "max-content"
           when 'email' then "minmax(180px, 2fr)"

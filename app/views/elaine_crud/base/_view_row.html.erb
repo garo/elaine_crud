@@ -3,6 +3,7 @@
 <% record_layout = calculate_layout(record, columns.map(&:to_sym)) %>
 <% has_multiple_rows = record_layout.length > 1 %>
 <% is_last_record = defined?(is_last_record) ? is_last_record : false %>
+<% show_actions = local_assigns.fetch(:show_actions, true) %>
 
 <%# Wrap entire row in turbo-frame for row-level inline editing %>
 <% if controller.respond_to?(:turbo_disabled?) && controller.turbo_disabled? %>
@@ -21,7 +22,7 @@
     <% end %>
 
     <%# Actions column (only on first row) %>
-    <% if row_index == 0 %>
+    <% if show_actions && row_index == 0 %>
       <% actions_border_bottom = has_multiple_rows ? '' : (is_last_record ? '' : 'border-b') %>
       <div class="px-3 py-3 text-sm text-gray-500 border-gray-200 <%= row_bg_class %> hover:bg-blue-50 <%= actions_border_bottom %> <%= 'row-span-' + record_layout.length.to_s if record_layout.length > 1 %>">
         <div class="flex space-x-2">
@@ -35,12 +36,13 @@
               url_for(action: :edit, id: record.id, page: params[:page], per_page: params[:per_page]),
               class: "text-green-600 hover:text-green-900",
               data: { turbo: false } %>
-          <%= link_to "Delete",
+          <%= button_to "Delete",
               url_for(action: :destroy, id: record.id),
               method: :delete,
-              data: {
-                confirm: "Are you sure?",
-                turbo_method: :delete
+              form: {
+                class: "inline",
+                data: { turbo: false },
+                onsubmit: "return confirm('Are you sure?');"
               },
               class: "text-red-600 hover:text-red-900" %>
         </div>
@@ -64,7 +66,7 @@
       <% end %>
 
       <%# Actions column (only on first row) %>
-      <% if row_index == 0 %>
+      <% if show_actions && row_index == 0 %>
         <% actions_border_bottom = has_multiple_rows ? '' : (is_last_record ? '' : 'border-b') %>
         <div class="px-3 py-3 text-sm text-gray-500 border-gray-200 <%= row_bg_class %> hover:bg-blue-50 <%= actions_border_bottom %> <%= 'row-span-' + record_layout.length.to_s if record_layout.length > 1 %>">
           <div class="flex space-x-2">
@@ -77,12 +79,13 @@
             <%= link_to "Edit",
                 url_for(action: :edit, id: record.id, page: params[:page], per_page: params[:per_page]),
                 class: "text-green-600 hover:text-green-900" %>
-            <%= link_to "Delete",
+            <%= button_to "Delete",
                 url_for(action: :destroy, id: record.id),
                 method: :delete,
-                data: {
-                  confirm: "Are you sure?",
-                  turbo_method: :delete
+                form: {
+                  class: "inline",
+                  data: { turbo: false },
+                  onsubmit: "return confirm('Are you sure?');"
                 },
                 class: "text-red-600 hover:text-red-900" %>
           </div>

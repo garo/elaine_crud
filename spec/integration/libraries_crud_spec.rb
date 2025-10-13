@@ -93,7 +93,7 @@ RSpec.describe 'Libraries CRUD', type: :feature do
 
       # Find delete link within the turbo-frame for this record
       within("turbo-frame#record_#{library.id}") do
-        click_link 'Delete'
+        click_button 'Delete'
       end
 
       expect(Library.count).to eq(initial_count - 1)

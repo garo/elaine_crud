@@ -108,9 +108,9 @@ RSpec.describe 'Books CRUD', type: :feature do
       visit '/books'
       initial_count = Book.count
 
-      # Find delete link within the turbo-frame for this record
+      # Find delete button within the turbo-frame for this record
       within("turbo-frame#record_#{book.id}") do
-        click_link 'Delete'
+        click_button 'Delete'
       end
 
       expect(Book.count).to eq(initial_count - 1)

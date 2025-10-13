@@ -111,7 +111,7 @@ RSpec.describe 'Librarians CRUD', type: :feature do
 
       # Find delete link within the turbo-frame for this record
       within("turbo-frame#record_#{librarian.id}") do
-        click_link 'Delete'
+        click_button 'Delete'
       end
 
       expect(Librarian.count).to eq(initial_count - 1)
