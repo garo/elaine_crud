@@ -41,10 +41,6 @@ module ElaineCrud
       @searchable_columns = determine_searchable_columns
       @filterable_columns = determine_filterable_columns
       @total_count = total_unfiltered_count if search_active?
-
-      # Handle inline editing mode
-      @edit_record_id = params[:edit].to_i if params[:edit].present?
-      @editing_record = @edit_record_id ? find_record_by_id(@edit_record_id) : nil
     end
 
     def show
@@ -125,9 +121,6 @@ module ElaineCrud
         if turbo_frame_request?
           # Use bg-white for consistency when returning from edit (alternating colors handled by full page refresh)
           render partial: 'elaine_crud/base/view_row', locals: { record: @record, columns: @columns, row_bg_class: 'bg-white', is_last_record: false }
-        elsif params[:from_inline_edit]
-          # Legacy inline edit mode (will be deprecated)
-          redirect_to polymorphic_path([crud_model], page: params[:page], per_page: params[:per_page]), notice: "#{crud_model.name} was successfully updated.", status: :see_other
         else
           redirect_to polymorphic_path(@record), notice: "#{crud_model.name} was successfully updated.", status: :see_other
         end
@@ -138,18 +131,6 @@ module ElaineCrud
         if turbo_frame_request?
           # Return edit row partial with errors
           render partial: 'elaine_crud/base/edit_row', locals: { record: @record, columns: @columns }, status: :unprocessable_entity
-        elsif params[:from_inline_edit]
-          # Legacy inline edit mode (will be deprecated)
-          @records = fetch_records
-          @edit_record_id = @record.id
-          @editing_record = @record
-          # Set search/filter metadata for index view (which includes search bar)
-          @search_query = search_query
-          @active_filters = filters
-          @searchable_columns = determine_searchable_columns
-          @filterable_columns = determine_filterable_columns
-          @total_count = total_unfiltered_count if search_active?
-          render 'elaine_crud/base/index', status: :unprocessable_entity
         else
           # Render full edit page with errors - need search/filter metadata
           @records = fetch_records

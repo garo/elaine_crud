@@ -7,7 +7,6 @@
 <turbo-frame id="record_<%= record.id %>" class="contents">
   <%# Edit form spans all columns %>
   <%= form_with model: record, url: { action: :update, id: record.id }, method: :patch, class: "contents" do |form| %>
-    <%= hidden_field_tag :from_inline_edit, true %>
 
     <%# Form content spanning all columns (including actions column) %>
     <div class="bg-blue-50 border-2 border-blue-400 p-6 border-b" style="grid-column: 1 / -1;">
