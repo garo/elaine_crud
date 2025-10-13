@@ -1,0 +1,49 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="max-w-3xl">
+    <%# Header %>
+    <div class="mb-6">
+      <div class="flex items-baseline gap-4 mb-2">
+        <h1 class="text-4xl font-bold text-gray-900">404</h1>
+        <h2 class="text-2xl font-semibold text-gray-700"><%= @model_name %> Not Found</h2>
+      </div>
+      <div class="h-1 w-24 bg-blue-600 rounded-full"></div>
+    </div>
+
+    <%# Error Message %>
+    <div class="bg-gray-50 border-l-4 border-blue-500 p-4 mb-6">
+      <div class="flex items-start">
+        <svg class="h-5 w-5 text-blue-500 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <div>
+          <p class="text-gray-700 font-medium">
+            The <%= @model_name.downcase %> with ID <span class="font-mono bg-gray-200 px-2 py-1 rounded text-sm"><%= @resource_id %></span> could not be found.
+          </p>
+          <p class="text-gray-600 text-sm mt-1">
+            It may have been deleted or the ID might be incorrect.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <%# Helpful Actions %>
+    <div class="space-y-3">
+      <div class="flex gap-3">
+        <%= link_to "View All #{@model_name.pluralize}", polymorphic_path(@model_class),
+            class: "inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded shadow-sm transition-colors duration-200" %>
+
+        <%= link_to "Create New #{@model_name}", new_polymorphic_path(@model_class),
+            class: "inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded shadow-sm transition-colors duration-200" %>
+      </div>
+
+      <div>
+        <a href="javascript:history.back()" class="inline-flex items-center text-gray-600 hover:text-gray-900 font-medium transition-colors duration-200">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Go Back
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

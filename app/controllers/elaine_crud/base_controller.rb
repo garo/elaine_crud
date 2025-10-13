@@ -29,6 +29,9 @@ module ElaineCrud
     protect_from_forgery with: :exception
     # No layout specified - host app controllers should set their own layout
 
+    # Handle record not found errors with custom 404 page
+    rescue_from ActiveRecord::RecordNotFound, with: :record_not_found
+
     # Standard CRUD actions
     def index
       @records = fetch_records
@@ -170,6 +173,19 @@ module ElaineCrud
     # Check if the request is coming from a Turbo Frame
     def turbo_frame_request?
       request.headers['Turbo-Frame'].present?
+    end
+
+    # Handle ActiveRecord::RecordNotFound with custom 404 page
+    def record_not_found(exception)
+      @model_name = crud_model.name
+      @model_class = crud_model
+      @resource_id = params[:id]
+      @exception_message = exception.message
+
+      respond_to do |format|
+        format.html { render 'elaine_crud/base/not_found', status: :not_found }
+        format.json { render json: { error: 'Record not found' }, status: :not_found }
+      end
     end
   end
 end
