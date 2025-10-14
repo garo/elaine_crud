@@ -3,7 +3,7 @@ class BooksController < ElaineCrud::BaseController
   layout 'application'
 
   model Book
-  permit_params :title, :isbn, :publication_year, :pages, :description, :available, :price
+  permit_params :title, :isbn, :publication_year, :pages, :description, :available, :price, :ebook_url
 
   default_sort column: :title, direction: :asc
   show_view_button
@@ -13,6 +13,21 @@ class BooksController < ElaineCrud::BaseController
     f.title "Price"
     f.display_as { |value, record|
       number_to_currency(value) if value.present?
+    }
+  end
+
+  # eBook URL - display as clickable link
+  field :ebook_url do |f|
+    f.title "eBook"
+    f.display_as { |value, record|
+      if value.present?
+        link_to "View eBook", value,
+          target: "_blank",
+          rel: "noopener noreferrer",
+          class: "text-blue-600 hover:text-blue-800 underline"
+      else
+        content_tag(:span, "—", class: "text-gray-400")
+      end
     }
   end
 
@@ -81,13 +96,14 @@ class BooksController < ElaineCrud::BaseController
       { field_name: :publication_year, colspan: 1, rowspan: 1 },
       { field_name: :pages, colspan: 1, rowspan: 1 },
       { field_name: :price, colspan: 1, rowspan: 1 },
-      { field_name: :available, colspan: 1, rowspan: 1 }
+      { field_name: :available, colspan: 1, rowspan: 1 },
+      { field_name: :ebook_url, colspan: 1, rowspan: 1 }
     ]
 
     row2 = [
       { field_name: :description, colspan: 3, rowspan: 1 },
       { field_name: :tags, colspan: 3, rowspan: 1 },
-      { field_name: :book_copies, colspan: 1, rowspan: 1 }
+      { field_name: :book_copies, colspan: 2, rowspan: 1 }
     ]
 
     [row1, row2]
@@ -97,7 +113,7 @@ class BooksController < ElaineCrud::BaseController
   # Header only shows fields from row 1, as row 2 fields span across those columns
   def calculate_layout_header(fields)
     # Only include fields that appear in row 1 (the actual column structure)
-    header_fields = [:title, :isbn, :author_id, :publication_year, :pages, :price, :available]
+    header_fields = [:title, :isbn, :author_id, :publication_year, :pages, :price, :available, :ebook_url]
     header_fields << "ROW-ACTIONS"
 
     header_fields.map do |field_name|
@@ -110,6 +126,7 @@ class BooksController < ElaineCrud::BaseController
               when 'pages' then "minmax(60px, 0.6fr)"
               when 'price' then "minmax(70px, 0.7fr)"
               when 'available' then "minmax(100px, 1.1fr)"
+              when 'ebook_url' then "minmax(90px, 0.9fr)"
               when 'ROW-ACTIONS' then "minmax(100px, 1.2fr)"
               else "minmax(100px, 1fr)"
               end

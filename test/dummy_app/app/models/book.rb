@@ -7,6 +7,7 @@ class Book < ApplicationRecord
 
   validates :title, presence: true
   validates :isbn, presence: true, uniqueness: true
+  validates :ebook_url, format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]), message: "must be a valid URL" }, allow_blank: true
 
   # A book is available if it has at least one available copy
   scope :available, -> { joins(:book_copies).where(book_copies: { available: true }).distinct }

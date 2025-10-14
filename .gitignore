@@ -1,4 +1,4 @@
 test/dummy_app/log
-test/dummy_app/db/
+test/dummy_app/db/*sqlit*
 test/dummy_app/tmp/
 .rspec_status
