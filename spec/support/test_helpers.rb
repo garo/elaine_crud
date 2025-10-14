@@ -27,8 +27,10 @@ module TestHelpers
     ActiveRecord::Base.connection.execute("DELETE FROM sqlite_sequence WHERE name='authors'")
     ActiveRecord::Base.connection.execute("DELETE FROM sqlite_sequence WHERE name='libraries'")
 
-    # Reload seeds
+    # Reload seeds in quiet mode (suppress output during tests)
+    ENV['SEED_QUIET'] = 'true'
     load Rails.root.join('db/seeds.rb')
+    ENV.delete('SEED_QUIET')
   end
 
   # Helper to verify no errors on page

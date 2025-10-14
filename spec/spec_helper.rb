@@ -37,11 +37,13 @@ RSpec.configure do |config|
     # Load the Rails environment
     Rails.application.load_tasks
 
-    # Reset and seed the database
+    # Reset and seed the database (quietly - suppress seed output during tests)
+    ENV['SEED_QUIET'] = 'true'
     Rake::Task['db:drop'].invoke
     Rake::Task['db:create'].invoke
     Rake::Task['db:migrate'].invoke
     Rake::Task['db:seed'].invoke
+    ENV.delete('SEED_QUIET')
   end
 
   # Start a new transaction for each test

@@ -1,5 +1,14 @@
+# Check if we should suppress output (during tests)
+# Use remove_const to avoid warnings when reloading
+Object.send(:remove_const, :QUIET_MODE) if defined?(QUIET_MODE)
+QUIET_MODE = ENV['SEED_QUIET'] == 'true'
+
+def seed_puts(message)
+  puts message unless QUIET_MODE
+end
+
 # Clear existing data
-puts "Clearing existing data..."
+seed_puts "Clearing existing data..."
 Loan.destroy_all
 BookCopy.destroy_all
 Profile.destroy_all
@@ -10,7 +19,7 @@ Librarian.destroy_all
 Author.destroy_all
 Library.destroy_all
 
-puts "Creating libraries..."
+seed_puts "Creating libraries..."
 libraries = [
   Library.create!(
     name: "Central City Library",
@@ -38,7 +47,7 @@ libraries = [
   )
 ]
 
-puts "Creating authors..."
+seed_puts "Creating authors..."
 authors = [
   Author.create!(
     name: "Jane Austen",
@@ -77,7 +86,7 @@ authors = [
   )
 ]
 
-puts "Creating tags..."
+seed_puts "Creating tags..."
 tags = [
   Tag.create!(name: "Fiction", color: "#3B82F6"),
   Tag.create!(name: "Non-Fiction", color: "#10B981"),
@@ -91,7 +100,7 @@ tags = [
   Tag.create!(name: "Dystopian", color: "#64748B")
 ]
 
-puts "Creating books..."
+seed_puts "Creating books..."
 books = [
   Book.create!(
     title: "Pride and Prejudice",
@@ -167,7 +176,7 @@ books = [
   )
 ]
 
-puts "Creating book copies..."
+seed_puts "Creating book copies..."
 book_copies = []
 
 # Create multiple copies for each book across different libraries
@@ -207,7 +216,7 @@ book_copies << BookCopy.create!(book: books[7], library: libraries[2], rfid: "RF
 book_copies << BookCopy.create!(book: books[7], library: libraries[0], rfid: "RFID-AF-002", available: true)
 book_copies << BookCopy.create!(book: books[7], library: libraries[1], rfid: "RFID-AF-003", available: true)
 
-puts "Creating members..."
+seed_puts "Creating members..."
 members = [
   # Central City members
   Member.create!(
@@ -270,7 +279,7 @@ members = [
   )
 ]
 
-puts "Creating loans..."
+seed_puts "Creating loans..."
 # 1984 copy 1 - checked out to Alice
 Loan.create!(
   book_copy: book_copies[3], # RFID-1984-001
@@ -304,7 +313,7 @@ Loan.create!(
   status: 'overdue'
 )
 
-puts "Creating librarians..."
+seed_puts "Creating librarians..."
 Librarian.create!(
   name: "Sarah Thompson",
   email: "s.thompson@centralcity.lib",
@@ -350,7 +359,7 @@ Librarian.create!(
   library: libraries[2]
 )
 
-puts "Creating profiles..."
+seed_puts "Creating profiles..."
 Profile.create!(
   member: members[0], # Alice
   bio: "Avid reader of classic literature and contemporary fiction. Member since 2020.",
@@ -369,7 +378,7 @@ Profile.create!(
   avatar_url: "https://i.pravatar.cc/150?img=33"
 )
 
-puts "Assigning tags to books..."
+seed_puts "Assigning tags to books..."
 # Pride and Prejudice - Fiction, Romance, Classic
 books[0].tags << [tags[0], tags[4], tags[7]]
 
@@ -394,19 +403,19 @@ books[6].tags << [tags[1], tags[6], tags[8]]
 # Half of a Yellow Sun - Fiction, Award Winner
 books[7].tags << [tags[0], tags[5]]
 
-puts "\n" + "="*60
-puts "Seed data created successfully!"
-puts "="*60
-puts "Summary:"
-puts "  Libraries: #{Library.count}"
-puts "  Authors: #{Author.count}"
-puts "  Books: #{Book.count}"
-puts "  Book Copies: #{BookCopy.count}"
-puts "  Tags: #{Tag.count}"
-puts "  Members: #{Member.count}"
-puts "  Profiles: #{Profile.count}"
-puts "  Loans: #{Loan.count}"
-puts "  Librarians: #{Librarian.count}"
-puts "="*60
-puts "\nRun 'rails server' and navigate to http://localhost:3000"
-puts "="*60
+seed_puts "\n" + "="*60
+seed_puts "Seed data created successfully!"
+seed_puts "="*60
+seed_puts "Summary:"
+seed_puts "  Libraries: #{Library.count}"
+seed_puts "  Authors: #{Author.count}"
+seed_puts "  Books: #{Book.count}"
+seed_puts "  Book Copies: #{BookCopy.count}"
+seed_puts "  Tags: #{Tag.count}"
+seed_puts "  Members: #{Member.count}"
+seed_puts "  Profiles: #{Profile.count}"
+seed_puts "  Loans: #{Loan.count}"
+seed_puts "  Librarians: #{Librarian.count}"
+seed_puts "="*60
+seed_puts "\nRun 'rails server' and navigate to http://localhost:3000"
+seed_puts "="*60
