@@ -15,6 +15,10 @@ require_relative 'elaine_crud/layout_calculation'
 require_relative 'elaine_crud/relationship_handling'
 require_relative 'elaine_crud/record_fetching'
 require_relative 'elaine_crud/parameter_handling'
+require_relative 'elaine_crud/export_handling'
+
+# Routing helper
+require_relative 'elaine_crud/routing'
 
 module ElaineCrud
   class Error < StandardError; end
