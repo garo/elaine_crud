@@ -78,7 +78,8 @@ RSpec.describe 'Sorting Functionality', type: :request do
       order_query = queries.find { |q| q.include?('ORDER BY') }
       # Should have some ORDER BY clause (either default or fallback)
       expect(order_query).to be_present
-      expect(order_query).to match(/ORDER BY \w+ (asc|desc)/i)
+      # After Arel fix, identifiers are quoted: ORDER BY "table"."column" ASC
+      expect(order_query).to match(/ORDER BY.*ASC/i)
     end
   end
 

@@ -52,12 +52,17 @@ module ElaineCrud
 
       return records if searchable_columns.empty?
 
-      # Build OR conditions for each searchable column
+      # Build OR conditions for each searchable column using Arel
+      # This prevents SQL injection in column names
+      table = crud_model.arel_table
+      search_pattern = "%#{search_query.downcase}%"
+
       conditions = searchable_columns.map do |column|
-        "LOWER(#{crud_model.table_name}.#{column}) LIKE :search"
+        table[column].lower.matches(search_pattern)
       end
 
-      records.where(conditions.join(' OR '), search: "%#{search_query.downcase}%")
+      # Combine all conditions with OR
+      records.where(conditions.reduce(:or))
     end
 
     # Apply individual field filters
@@ -89,24 +94,26 @@ module ElaineCrud
     # @return [ActiveRecord::Relation]
     def apply_field_filter(records, field, value)
       column_type = get_column_type(field)
+      table = crud_model.arel_table
 
       case column_type
       when :string, :text
-        # Partial match for text fields
-        records.where("LOWER(#{crud_model.table_name}.#{field}) LIKE ?", "%#{value.downcase}%")
+        # Partial match for text fields using Arel
+        # This prevents SQL injection in field names
+        records.where(table[field].lower.matches("%#{value.downcase}%"))
       when :boolean
-        # Exact match for booleans
-        records.where(field => ActiveModel::Type::Boolean.new.cast(value))
+        # Exact match for booleans using Arel
+        records.where(table[field].eq(ActiveModel::Type::Boolean.new.cast(value)))
       when :integer
-        # Handle foreign keys and integers
+        # Handle foreign keys and integers using Arel
         if value.is_a?(Array)
-          records.where(field => value)
+          records.where(table[field].in(value))
         else
-          records.where(field => value)
+          records.where(table[field].eq(value))
         end
       else
-        # Default: exact match
-        records.where(field => value)
+        # Default: exact match using Arel
+        records.where(table[field].eq(value))
       end
     end
 
@@ -115,17 +122,20 @@ module ElaineCrud
     # @return [ActiveRecord::Relation]
     def apply_date_range_filters(records)
       date_fields = determine_date_columns
+      table = crud_model.arel_table
 
       date_fields.each do |field|
         from_key = "#{field}_from"
         to_key = "#{field}_to"
 
+        # Use Arel to safely construct date range queries
+        # This prevents SQL injection in field names
         if filters[from_key].present?
-          records = records.where("#{crud_model.table_name}.#{field} >= ?", filters[from_key])
+          records = records.where(table[field].gteq(filters[from_key]))
         end
 
         if filters[to_key].present?
-          records = records.where("#{crud_model.table_name}.#{field} <= ?", filters[to_key])
+          records = records.where(table[field].lteq(filters[to_key]))
         end
       end
 

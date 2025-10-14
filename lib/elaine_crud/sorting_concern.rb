@@ -45,7 +45,10 @@ module ElaineCrud
       # Validate sort column exists
       return records unless valid_sort_column?(sort_column)
 
-      records.order("#{sort_column} #{sort_direction}")
+      # Use Arel to safely construct ORDER BY clause
+      # This prevents SQL injection in column names
+      table = crud_model.arel_table
+      records.order(table[sort_column].send(sort_direction))
     end
 
     # Check if a column is valid for sorting
