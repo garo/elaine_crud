@@ -15,7 +15,15 @@
   <div id="export-menu"
        class="hidden absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
     <div class="py-1" role="menu" style="max-height: 300px; overflow-y: auto;">
-      <%= link_to({action: :export, format: :csv, search: params[:search], sort: params[:sort], direction: params[:direction], filter: params[:filter]},
+      <%
+        # Build export params, converting filter hash if present
+        csv_params = {action: :export, format: :csv}
+        csv_params[:search] = params[:search] if params[:search].present?
+        csv_params[:sort] = params[:sort] if params[:sort].present?
+        csv_params[:direction] = params[:direction] if params[:direction].present?
+        csv_params[:filter] = params[:filter].to_unsafe_h if params[:filter].present?
+      %>
+      <%= link_to(csv_params,
                   {class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-150 no-underline",
                    role: "menuitem",
                    style: "display: flex; text-decoration: none;"}) do %>
@@ -25,7 +33,14 @@
         <span>CSV Format</span>
       <% end %>
 
-      <%= link_to({action: :export, format: :xlsx, search: params[:search], sort: params[:sort], direction: params[:direction], filter: params[:filter]},
+      <%
+        xlsx_params = {action: :export, format: :xlsx}
+        xlsx_params[:search] = params[:search] if params[:search].present?
+        xlsx_params[:sort] = params[:sort] if params[:sort].present?
+        xlsx_params[:direction] = params[:direction] if params[:direction].present?
+        xlsx_params[:filter] = params[:filter].to_unsafe_h if params[:filter].present?
+      %>
+      <%= link_to(xlsx_params,
                   {class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-150 no-underline",
                    role: "menuitem",
                    style: "display: flex; text-decoration: none;"}) do %>
@@ -35,7 +50,14 @@
         <span>Excel (XLSX)</span>
       <% end %>
 
-      <%= link_to({action: :export, format: :json, search: params[:search], sort: params[:sort], direction: params[:direction], filter: params[:filter]},
+      <%
+        json_params = {action: :export, format: :json}
+        json_params[:search] = params[:search] if params[:search].present?
+        json_params[:sort] = params[:sort] if params[:sort].present?
+        json_params[:direction] = params[:direction] if params[:direction].present?
+        json_params[:filter] = params[:filter].to_unsafe_h if params[:filter].present?
+      %>
+      <%= link_to(json_params,
                   {class: "flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-150 no-underline",
                    role: "menuitem",
                    style: "display: flex; text-decoration: none;"}) do %>

@@ -31,7 +31,16 @@ module ElaineCrud
     def filters
       filter_params = params[:filter] || {}
       # Convert ActionController::Parameters to Hash for compatibility
-      filter_params.respond_to?(:to_unsafe_h) ? filter_params.to_unsafe_h : filter_params.to_h
+      if filter_params.respond_to?(:to_unsafe_h)
+        filter_params.to_unsafe_h
+      elsif filter_params.respond_to?(:to_h)
+        filter_params.to_h
+      elsif filter_params.is_a?(Hash)
+        filter_params
+      else
+        # Handle malformed filter parameter (e.g., plain string)
+        {}
+      end
     end
 
     # Apply global text search across searchable columns
@@ -162,14 +171,17 @@ module ElaineCrud
 
         config = field_config_for(col_name.to_sym)
 
-        # Check if explicitly configured as filterable
-        if config&.respond_to?(:filterable) && config.filterable
-          filterable << {
-            name: col_name.to_sym,
-            type: infer_filter_type(col_name),
-            config: config
-          }
+        # Check if explicitly configured as non-filterable
+        if config&.respond_to?(:filterable)
+          next unless config.filterable  # Skip if explicitly set to false
         end
+
+        # Default: all fields are filterable (matching search behavior)
+        filterable << {
+          name: col_name.to_sym,
+          type: infer_filter_type(col_name),
+          config: config
+        }
       end
 
       filterable
@@ -194,11 +206,14 @@ module ElaineCrud
         if [:date, :datetime, :timestamp].include?(col.type) &&
            determine_columns.include?(col.name)
 
-          # Check if this field is configured as filterable
+          # Check if explicitly configured as non-filterable
           config = field_config_for(col.name.to_sym)
-          if config&.respond_to?(:filterable) && config.filterable
-            date_cols << col.name
+          if config&.respond_to?(:filterable)
+            next unless config.filterable  # Skip if explicitly set to false
           end
+
+          # Default: date fields are filterable
+          date_cols << col.name
         end
       end
 
