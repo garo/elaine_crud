@@ -9,10 +9,13 @@ module ElaineCrud
     included do
       class_attribute :crud_model, :permitted_attributes, :column_configurations,
                       :field_configurations, :default_sort_column, :default_sort_direction,
-                      :disable_turbo_frames, :show_view_action_button
+                      :disable_turbo_frames, :show_view_action_button, :max_export_records
 
       # Default: View button is disabled
       self.show_view_action_button = false
+
+      # Default: Max 10,000 records for export
+      self.max_export_records = 10_000
     end
 
     class_methods do
@@ -123,6 +126,12 @@ module ElaineCrud
       # @param enabled [Boolean] Whether to show the View button (default: true)
       def show_view_button(enabled = true)
         self.show_view_action_button = enabled
+      end
+
+      # Set the maximum number of records that can be exported
+      # @param limit [Integer] Maximum number of records (default: 10,000)
+      def max_export(limit)
+        self.max_export_records = limit
       end
 
       # Automatically configure foreign key fields based on belongs_to relationships

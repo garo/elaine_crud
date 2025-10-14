@@ -18,6 +18,7 @@ module ElaineCrud
     include ElaineCrud::RelationshipHandling
     include ElaineCrud::RecordFetching
     include ElaineCrud::ParameterHandling
+    include ElaineCrud::ExportHandling
 
     # Include view helpers so they're available in lambda contexts
     include ActionView::Helpers::TagHelper

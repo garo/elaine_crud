@@ -36,6 +36,27 @@ module ElaineCrud
       apply_pagination(records)
     end
 
+    # Fetch records without pagination (for exports)
+    def fetch_records_for_export
+      records = crud_model.all
+
+      # Apply parent filtering for has_many relationships
+      records = apply_has_many_filtering(records)
+
+      # Include all relationships to avoid N+1 queries
+      includes_list = get_all_relationship_includes
+      records = records.includes(includes_list) if includes_list.any?
+
+      # Apply search and filters
+      records = apply_search_and_filters(records)
+
+      # Apply sorting
+      records = apply_sorting(records)
+
+      # Return without pagination
+      records
+    end
+
     # Apply pagination to the record set
     # @param records [ActiveRecord::Relation] The records to paginate
     # @return [ActiveRecord::Relation] The paginated records

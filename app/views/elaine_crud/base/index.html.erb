@@ -35,9 +35,12 @@
         <%= render 'elaine_crud/base/per_page_selector', per_page: determine_per_page %>
       <% end %>
     </div>
-    <%= link_to "New #{@model_name}",
-        url_for(action: :new),
-        class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" %>
+    <div class="flex gap-2">
+      <%= link_to "New #{@model_name}",
+          url_for(action: :new),
+          class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" %>
+      <%= render 'elaine_crud/base/export_button' %>
+    </div>
   </div>
 
   <%# Search and Filter Bar %>
