@@ -7,7 +7,7 @@ module ElaineCrud
     attr_accessor :field_name, :title, :description, :readonly, :default_value,
                   :display_callback, :edit_callback, :edit_partial, :options, :foreign_key_config,
                   :has_many_config, :has_one_config, :habtm_config, :visible, :grid_column_span,
-                  :searchable, :filterable, :filter_type
+                  :searchable, :filterable, :filter_type, :nested_create_config
 
     def initialize(field_name, **options)
       @field_name = field_name
@@ -30,6 +30,7 @@ module ElaineCrud
       @searchable = options.fetch(:searchable, nil)
       @filterable = options.fetch(:filterable, nil)
       @filter_type = options.fetch(:filter_type, nil)
+      @nested_create_config = options.fetch(:nested_create, nil)
     end
 
     # Block-style DSL methods
@@ -119,6 +120,12 @@ module ElaineCrud
       @filter_type = value
     end
 
+    def nested_create(config = nil)
+      return @nested_create_config if config.nil?
+      # Allow nested_create true as shorthand - use true as the value since {} is not .present?
+      @nested_create_config = config == true ? true : config
+    end
+
     # Helper methods for checking configuration state
     def has_options?
       @options.present?
@@ -150,6 +157,10 @@ module ElaineCrud
 
     def has_edit_partial?
       @edit_partial.present?
+    end
+
+    def has_nested_create?
+      @nested_create_config.present?
     end
 
     # Method to execute display callback

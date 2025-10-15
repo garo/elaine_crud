@@ -14,9 +14,12 @@ module ElaineCrud
 
         begin
           controller_class = controller_name.constantize
-          # Add export route if controller inherits from ElaineCrud::BaseController
+          # Add ElaineCrud routes if controller inherits from ElaineCrud::BaseController
           if controller_class < ElaineCrud::BaseController
-            collection { get :export }
+            collection do
+              get :export      # For CSV/Excel/JSON export
+              get :new_modal   # For nested record creation in modal
+            end
           end
         rescue NameError
           # Controller doesn't exist yet or doesn't use ElaineCrud - skip

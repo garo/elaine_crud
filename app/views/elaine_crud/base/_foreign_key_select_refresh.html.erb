@@ -1,0 +1,52 @@
+<%# Partial to refresh foreign key dropdown after nested create %>
+<div id="<%= field_name %>_select_wrapper">
+  <% if field_config&.has_foreign_key? %>
+    <%
+      # Generate options from the foreign key configuration
+      target_model = field_config.foreign_key_config[:model]
+      display_field = field_config.foreign_key_config[:display]
+      scope = field_config.foreign_key_config[:scope]
+
+      # Get records using scope if provided
+      records = scope ? target_model.instance_exec(&scope) : target_model.all
+
+      # Generate options based on display configuration
+      options = records.map do |record|
+        label = case display_field
+                when Symbol
+                  record.public_send(display_field)
+                when Proc
+                  display_field.call(record)
+                else
+                  record.to_s
+                end
+        [label, record.id]
+      end
+    %>
+    <select class="block w-full border border-gray-500 focus:border-gray-700 text-sm bg-white px-3 py-2"
+            name="<%= parent_model %>[<%= field_name %>]"
+            id="<%= parent_model %>_<%= field_name %>">
+      <option value="">Select...</option>
+      <% options.each do |(label, value)| %>
+        <option value="<%= value %>" <%= 'selected' if value == selected_id %>>
+          <%= label %>
+        </option>
+      <% end %>
+    </select>
+  <% end %>
+</div>
+
+<script>
+  // Close modal after successful create and refresh
+  ElaineCrud.closeModal();
+
+  // Show success notification
+  const notification = document.createElement('div');
+  notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded shadow-lg z-50';
+  notification.textContent = '<%= @model_name %> created successfully!';
+  document.body.appendChild(notification);
+
+  setTimeout(() => {
+    notification.remove();
+  }, 3000);
+</script>

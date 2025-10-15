@@ -1,0 +1,71 @@
+<%# Generic modal component for nested record creation %>
+<div id="elaine-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+  <!-- Background overlay -->
+  <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="ElaineCrud.closeModal()"></div>
+
+  <!-- Modal panel -->
+  <div class="flex min-h-full items-center justify-center p-4">
+    <div class="relative bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+      <!-- Close button -->
+      <button type="button"
+              onclick="ElaineCrud.closeModal()"
+              class="absolute top-4 right-4 text-gray-400 hover:text-gray-500 z-10">
+        <span class="sr-only">Close</span>
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+
+      <!-- Modal content loaded via Turbo Frame -->
+      <div class="overflow-y-auto max-h-[85vh]">
+        <%= turbo_frame_tag "modal_content" do %>
+          <div class="p-6">
+            <p class="text-gray-500">Loading...</p>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Global ElaineCrud namespace for modal functions
+window.ElaineCrud = window.ElaineCrud || {};
+
+ElaineCrud.openModal = function() {
+  const modal = document.getElementById('elaine-modal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+};
+
+ElaineCrud.closeModal = function() {
+  const modal = document.getElementById('elaine-modal');
+  if (modal) {
+    modal.classList.add('hidden');
+    document.body.style.overflow = '';
+
+    // Clear modal content
+    const frame = document.getElementById('modal_content');
+    if (frame) {
+      frame.innerHTML = '<div class="p-6"><p class="text-gray-500">Loading...</p></div>';
+    }
+  }
+};
+
+// Listen for successful turbo form submissions in modal
+document.addEventListener('turbo:submit-end', function(event) {
+  if (event.detail.success && event.target.dataset.nestedCreate) {
+    // Close modal on successful submission
+    ElaineCrud.closeModal();
+  }
+});
+
+// Open modal when turbo frame loads in modal
+document.addEventListener('turbo:frame-load', function(event) {
+  if (event.target.id === 'modal_content') {
+    ElaineCrud.openModal();
+  }
+});
+</script>

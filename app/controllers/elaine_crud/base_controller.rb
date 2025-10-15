@@ -65,6 +65,17 @@ module ElaineCrud
       render 'elaine_crud/base/new'
     end
 
+    # Action for rendering new form in modal (for nested creates)
+    def new_modal
+      @record = crud_model.new
+      @model_name = crud_model.name
+      @modal_mode = true
+      @return_field = params[:return_field]  # The foreign key field to update
+
+      apply_field_defaults(@record)
+      render 'elaine_crud/base/new_modal', layout: false
+    end
+
     def create
       @record = crud_model.new(record_params)
 
@@ -72,11 +83,36 @@ module ElaineCrud
       populate_parent_relationships(@record) if @record.errors.any?
 
       if @record.save
-        # Redirect back to filtered view if came from parent context
-        redirect_to redirect_after_create_path, notice: "#{crud_model.name} was successfully created.", status: :see_other
+        # Handle modal mode (nested create)
+        if params[:modal_mode] == 'true' && params[:return_field].present?
+          # Get field configuration from the parent controller
+          parent_controller_class = "#{params[:parent_model].pluralize.camelize}Controller".constantize
+          parent_controller = parent_controller_class.new
+          parent_field_config = parent_controller.send(:field_config_for, params[:return_field].to_sym)
+
+          render turbo_stream: turbo_stream.replace(
+            "#{params[:return_field]}_select_wrapper",
+            partial: 'elaine_crud/base/foreign_key_select_refresh',
+            locals: {
+              field_name: params[:return_field],
+              selected_id: @record.id,
+              field_config: parent_field_config,
+              parent_model: params[:parent_model]
+            }
+          )
+        else
+          # Redirect back to filtered view if came from parent context
+          redirect_to redirect_after_create_path, notice: "#{crud_model.name} was successfully created.", status: :see_other
+        end
       else
         @model_name = crud_model.name
-        render 'elaine_crud/base/new', status: :unprocessable_entity
+        @modal_mode = params[:modal_mode] == 'true'
+
+        if @modal_mode
+          render 'elaine_crud/base/new_modal', layout: false, status: :unprocessable_entity
+        else
+          render 'elaine_crud/base/new', status: :unprocessable_entity
+        end
       end
     end
 

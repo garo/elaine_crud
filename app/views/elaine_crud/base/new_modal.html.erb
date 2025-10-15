@@ -1,0 +1,37 @@
+<%# Modal view for creating nested records %>
+<%= turbo_frame_tag "modal_content" do %>
+  <div class="p-6">
+    <h2 class="text-2xl font-bold text-gray-900 mb-6">
+      New <%= @model_name %>
+    </h2>
+
+    <%= form_with(model: @record,
+                  url: url_for(action: :create),
+                  method: :post,
+                  data: { nested_create: true }) do |form| %>
+
+      <%# Hidden fields to track modal mode %>
+      <%= hidden_field_tag :modal_mode, 'true' %>
+      <%= hidden_field_tag :return_field, @return_field %>
+      <%= hidden_field_tag :parent_model, params[:parent_model] %>
+
+      <%# Render form fields %>
+      <div class="space-y-4">
+        <%= render partial: 'elaine_crud/base/form_fields',
+                   locals: { form: form, record: @record } %>
+      </div>
+
+      <%# Form actions %>
+      <div class="mt-6 flex items-center justify-end space-x-3">
+        <button type="button"
+                onclick="ElaineCrud.closeModal()"
+                class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded">
+          Cancel
+        </button>
+
+        <%= form.submit "Create #{@model_name}",
+            class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" %>
+      </div>
+    <% end %>
+  </div>
+<% end %>

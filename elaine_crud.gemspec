@@ -30,6 +30,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'kaminari', '~> 1.2'
   spec.add_dependency 'caxlsx', '~> 4.0'
   spec.add_dependency 'csv', '~> 3.0'
+  spec.add_dependency 'turbo-rails', '~> 2.0'
 
   # Development dependencies
   spec.add_development_dependency 'rspec', '~> 3.0'

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'rails/engine'
+require 'turbo-rails'
 
 module ElaineCrud
   class Engine < ::Rails::Engine

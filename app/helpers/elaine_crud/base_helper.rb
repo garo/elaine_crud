@@ -431,9 +431,26 @@ module ElaineCrud
       current_value = form.object.public_send(field_name)
       options = foreign_key_options_for_field(field_name, current_value)
 
-      form.select(field_name, options,
-                 { include_blank: config.foreign_key_config[:null_option] || "Select..." },
-                 { class: field_class })
+      select_html = content_tag(:div, id: "#{field_name}_select_wrapper") do
+        form.select(field_name, options,
+                   { include_blank: config.foreign_key_config[:null_option] || "Select..." },
+                   { class: field_class })
+      end
+
+      # Check if nested_create is enabled
+      if config&.has_nested_create?
+        target_model = config.foreign_key_config[:model]
+        target_controller = target_model.name.underscore.pluralize
+
+        button_html = link_to "+ New #{target_model.name}",
+          url_for(controller: "/#{target_controller}", action: :new_modal, return_field: field_name, parent_model: controller.crud_model.name.underscore),
+          class: "inline-block mt-2 text-sm text-blue-600 hover:text-blue-800 underline",
+          data: { turbo_frame: "modal_content" }
+
+        select_html + button_html
+      else
+        select_html
+      end
     end
 
     # Get foreign key options for a specific field

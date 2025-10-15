@@ -1,0 +1,45 @@
+<%# Shared form fields partial for reuse in modal and regular forms %>
+<% permitted_attributes.each do |field_name| %>
+  <%# Handle hash entries (like {tag_ids: []}) - convert to association name %>
+  <% original_param_name = field_name %>
+  <% if field_name.is_a?(Hash) %>
+    <%# Extract the key and convert tag_ids -> tags %>
+    <% original_param_name = field_name.keys.first.to_sym %>
+    <% field_name = field_name.keys.first.to_s.sub(/_ids$/, '').pluralize.to_sym %>
+  <% end %>
+
+  <%# Determine which field name to check for errors %>
+  <% error_field_name = field_name %>
+  <% if original_param_name.is_a?(Symbol) && original_param_name.to_s.end_with?('_ids') %>
+    <% param_field_name = original_param_name.to_s.sub(/_ids$/, '').pluralize.to_sym %>
+    <% error_field_name = record.errors[param_field_name].any? ? param_field_name : original_param_name %>
+  <% end %>
+
+  <% has_error = record.errors[error_field_name].any? %>
+
+  <div class="form-group">
+    <label for="<%= "#{record.class.name.underscore}_#{field_name}" %>"
+           class="block text-sm font-medium text-gray-700 mb-1">
+      <%= field_title(field_name) %>
+      <% if field_readonly?(field_name) %>
+        <span class="text-xs text-gray-500">(read-only)</span>
+      <% end %>
+    </label>
+
+    <%= render_form_field(form, record, field_name, has_error: has_error) %>
+
+    <%# Display field-level error message %>
+    <% if has_error %>
+      <p class="text-sm text-red-600 mt-1">
+        <%= record.errors[error_field_name].first %>
+      </p>
+    <% end %>
+
+    <%# Display field description (help text) %>
+    <% if field_description(field_name).present? %>
+      <p class="text-xs text-gray-500 mt-1">
+        <%= field_description(field_name) %>
+      </p>
+    <% end %>
+  </div>
+<% end %>

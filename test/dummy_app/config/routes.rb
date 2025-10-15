@@ -4,7 +4,7 @@ Rails.application.routes.draw do
   # Root path - shows all resources
   root "libraries#index"
 
-  # CRUD resources - export action is automatically added for ElaineCrud controllers
+  # CRUD resources - export and new_modal actions are automatically added for ElaineCrud controllers
   resources :libraries
   resources :authors
   resources :books

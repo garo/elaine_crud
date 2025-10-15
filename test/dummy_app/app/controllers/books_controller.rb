@@ -3,7 +3,7 @@ class BooksController < ElaineCrud::BaseController
   layout 'application'
 
   model Book
-  permit_params :title, :isbn, :publication_year, :pages, :description, :available, :price, :ebook_url
+  permit_params :author_id, :title, :isbn, :publication_year, :pages, :description, :available, :price, :ebook_url
 
   default_sort column: :title, direction: :asc
   show_view_button
@@ -43,8 +43,14 @@ class BooksController < ElaineCrud::BaseController
     }
   end
 
-  # Foreign keys auto-detected: author_id
-  # Automatically shows dropdowns in forms and names in index
+  # Foreign key with nested create support
+  field :author_id do |f|
+    f.foreign_key(
+      model: Author,
+      display: :name
+    )
+    f.nested_create true  # Enable creating new authors from book form
+  end
 
   # has_many :book_copies automatically shown with count
   # has_many :loans through :book_copies
