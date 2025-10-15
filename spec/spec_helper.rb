@@ -18,6 +18,47 @@ Dir[File.expand_path('support/**/*.rb', __dir__)].each { |f| require f }
 Capybara.default_driver = :rack_test
 Capybara.app = Rails.application
 
+# Register Chrome drivers for JS tests (if selenium-webdriver is available)
+begin
+  require 'selenium-webdriver'
+
+  # Default to headless for CI/automated runs
+  Capybara.javascript_driver = :selenium_headless_chrome
+
+  # Headless Chrome (invisible, fast)
+  Capybara.register_driver :selenium_headless_chrome do |app|
+    options = Selenium::WebDriver::Chrome::Options.new
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--disable-gpu')
+
+    Capybara::Selenium::Driver.new(app, browser: :chrome, options: options)
+  end
+
+  # Visible Chrome (for debugging - watch the browser in action)
+  # Use with: SELENIUM_VISIBLE=true bundle exec rspec
+  Capybara.register_driver :selenium_chrome do |app|
+    options = Selenium::WebDriver::Chrome::Options.new
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
+    # Optionally start maximized to see everything clearly
+    options.add_argument('--start-maximized')
+
+    Capybara::Selenium::Driver.new(app, browser: :chrome, options: options)
+  end
+
+  # Switch to visible browser if SELENIUM_VISIBLE environment variable is set
+  if ENV['SELENIUM_VISIBLE']
+    Capybara.javascript_driver = :selenium_chrome
+    puts "Running tests in VISIBLE browser mode - you can watch the tests execute!"
+  end
+rescue LoadError
+  # Selenium not available - JS tests will be skipped
+  puts "Warning: selenium-webdriver gem not found. JavaScript tests will be skipped."
+  puts "To run JS tests, add selenium-webdriver to your Gemfile and run 'bundle install'"
+end
+
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
   config.example_status_persistence_file_path = '.rspec_status'
@@ -28,6 +69,9 @@ RSpec.configure do |config|
   config.expect_with :rspec do |c|
     c.syntax = :expect
   end
+
+  # Skip JS tests if Selenium is not available
+  config.filter_run_excluding js: true unless defined?(Selenium)
 
   # Use transactions for database cleanup
   config.use_transactional_fixtures = true

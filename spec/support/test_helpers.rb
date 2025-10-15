@@ -37,7 +37,10 @@ module TestHelpers
   def expect_no_errors
     expect(page).not_to have_content('Exception')
     expect(page).not_to have_content('Error')
-    expect(page.status_code).to eq(200)
+    # Only check status code for rack_test driver (Selenium doesn't support it)
+    if Capybara.current_driver == :rack_test
+      expect(page.status_code).to eq(200)
+    end
   end
 
   # Helper to count table rows
