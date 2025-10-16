@@ -74,28 +74,34 @@ module ElaineCrud
     def display_foreign_key_value(record, field_name, config)
       foreign_key_value = record.public_send(field_name)
       return content_tag(:span, '—', class: 'text-gray-400') if foreign_key_value.blank?
-      
+
       foreign_key_config = config.foreign_key_config
       target_model = foreign_key_config[:model]
       return foreign_key_value.to_s unless target_model
-      
+
       # Load the related record
       related_record = target_model.find_by(id: foreign_key_value)
       return content_tag(:span, "Not found (ID: #{foreign_key_value})", class: 'text-red-400') unless related_record
-      
+
       # Apply display callback if configured
       display_value = case foreign_key_config[:display]
       when Symbol
-        related_record.respond_to?(foreign_key_config[:display]) ? 
-          related_record.public_send(foreign_key_config[:display]) : 
+        related_record.respond_to?(foreign_key_config[:display]) ?
+          related_record.public_send(foreign_key_config[:display]) :
           related_record.to_s
       when Proc
         foreign_key_config[:display].call(related_record)
       else
         related_record.to_s
       end
-      
-      display_value.to_s.html_safe
+
+      # Auto-generate link to related record if it has a show route
+      # This can be disabled by setting linkable: false in foreign_key config
+      if should_link_foreign_key?(foreign_key_config, related_record)
+        render_foreign_key_link(related_record, display_value, target_model)
+      else
+        display_value.to_s.html_safe
+      end
     rescue => e
       # Graceful error handling
       if Rails.env.development?
@@ -103,6 +109,44 @@ module ElaineCrud
       else
         foreign_key_value.to_s
       end
+    end
+
+    # Check if foreign key should be rendered as a link
+    # @param foreign_key_config [Hash] The foreign key configuration
+    # @param related_record [ActiveRecord::Base] The related record
+    # @return [Boolean] Whether to render as a link
+    def should_link_foreign_key?(foreign_key_config, related_record)
+      # Check if explicitly disabled
+      return false if foreign_key_config[:linkable] == false
+
+      # Check if a show route exists for the model
+      model_name = related_record.class.name.underscore.pluralize
+      begin
+        # Try to generate the path - if it raises an error, route doesn't exist
+        url_helpers = Rails.application.routes.url_helpers
+        url_helpers.public_send("#{model_name.singularize}_path", related_record)
+        true
+      rescue NoMethodError, ActionController::UrlGenerationError
+        false
+      end
+    end
+
+    # Render foreign key as a clickable link
+    # @param related_record [ActiveRecord::Base] The related record
+    # @param display_value [String] The text to display
+    # @param target_model [Class] The target model class
+    # @return [String] HTML link
+    def render_foreign_key_link(related_record, display_value, target_model)
+      model_name = target_model.name.underscore.pluralize
+      path_helper = "#{model_name.singularize}_path"
+
+      link_to display_value,
+        url_for(controller: "/#{model_name}", action: :show, id: related_record.id),
+        class: "text-blue-600 hover:text-blue-800 underline font-medium",
+        data: { turbo: false }  # Disable Turbo for cross-resource navigation
+    rescue => e
+      # Fallback to plain text if link generation fails
+      display_value.to_s.html_safe
     end
 
     # Display has_many relationship value

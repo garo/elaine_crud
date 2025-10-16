@@ -44,12 +44,14 @@ class BooksController < ElaineCrud::BaseController
   end
 
   # Foreign key with nested create support
+  # Auto-renders as clickable link to author show page
   field :author_id do |f|
     f.foreign_key(
       model: Author,
       display: :name
     )
     f.nested_create true  # Enable creating new authors from book form
+    # Note: linkable defaults to true, set linkable: false to disable auto-linking
   end
 
   # has_many :book_copies automatically shown with count
