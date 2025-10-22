@@ -5,16 +5,16 @@ require_relative 'lib/elaine_crud/version'
 Gem::Specification.new do |spec|
   spec.name = 'elaine_crud'
   spec.version = ElaineCrud::VERSION
-  spec.authors = ['CRUD Generator']
-  spec.email = ['crud@example.com']
+  spec.authors = ['Garo']
+  spec.email = ['juho.makinen@gmail.com']
 
   spec.summary = 'A Rails engine for generating CRUD UIs for ActiveRecord models'
   spec.description = 'ElaineCrud provides a reusable BaseController and views to quickly generate CRUD interfaces for any ActiveRecord model with minimal configuration.'
-  spec.homepage = 'https://github.com/example/elaine_crud'
+  spec.homepage = 'https://github.com/garo/elaine_crud'
   spec.license = 'MIT'
   
   spec.metadata['homepage_uri'] = spec.homepage
-  spec.metadata['source_code_uri'] = 'https://github.com/example/elaine_crud'
+  spec.metadata['source_code_uri'] = 'https://github.com/garo/elaine_crud'
 
   spec.files = Dir.chdir(__dir__) do
     `git ls-files -z 2>/dev/null`.split("\x0").reject do |f|

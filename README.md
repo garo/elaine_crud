@@ -15,7 +15,7 @@ A Rails engine for rapidly generating CRUD interfaces for ActiveRecord models wi
 Add to your `Gemfile`:
 
 ```ruby
-gem 'elaine_crud', path: '../elaine_crud'
+gem 'elaine_crud'
 ```
 
 Then run:
@@ -45,18 +45,24 @@ resources :people
 
 ### 3. Configure TailwindCSS (Important!)
 
-Add the gem's files to your `tailwind.config.js`:
+Add the gem's files to your `tailwind.config.js`. You need to include the gem's path in Tailwind's content scanning:
 
 ```javascript
+const path = require('path')
+const execSync = require('child_process').execSync
+
+// Get the gem path from bundler
+const gemPath = execSync('bundle show elaine_crud', { encoding: 'utf-8' }).trim()
+
 module.exports = {
   content: [
     './app/views/**/*.html.erb',
     './app/helpers/**/*.rb',
     './app/assets/stylesheets/**/*.css',
     './app/javascript/**/*.js',
-    // Add this line to include ElaineCrud views
-    '../elaine_crud/app/views/**/*.html.erb',
-    '../elaine_crud/app/helpers/**/*.rb'
+    // Add ElaineCrud gem views and helpers
+    path.join(gemPath, 'app/views/**/*.html.erb'),
+    path.join(gemPath, 'app/helpers/**/*.rb')
   ],
   // ... rest of your config
 }

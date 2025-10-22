@@ -1,4 +1,36 @@
-test/dummy_app/log
-test/dummy_app/db/*sqlit*
-test/dummy_app/tmp/
+# Gem package
+*.gem
+
+# Bundler
+.bundle/
+vendor/bundle/
+
+# RSpec
 .rspec_status
+coverage/
+
+# Test database & logs
+test/dummy_app/log
+test/dummy_app/db/*.sqlite3
+test/dummy_app/db/*.sqlite3-*
+test/dummy_app/tmp/
+
+# Editor files
+*.swp
+*.swo
+*~
+.DS_Store
+.idea/
+.vscode/
+
+# Environment
+.env
+.env.local
+
+# Documentation
+.yardoc/
+doc/
+
+# Claude Code
+.clauderc
+.claude/
