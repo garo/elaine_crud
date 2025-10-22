@@ -25,25 +25,58 @@ bundle install
 
 ## Quick Start
 
-### 1. Create a Controller
+### 1. Ensure Your Application Has a Layout
+
+ElaineCrud is a **content-only engine** - it provides CRUD views but relies on your application to provide the HTML structure (layout, navigation, styling).
+
+Your Rails app should have a layout file (typically `app/views/layouts/application.html.erb`) that includes:
+- Basic HTML structure (`<html>`, `<head>`, `<body>`)
+- TailwindCSS stylesheets
+- JavaScript imports (including Turbo)
+- Navigation/header/footer (optional, your choice)
+
+Most Rails apps with TailwindCSS already have this. If not, ensure you have:
+
+```erb
+<!-- app/views/layouts/application.html.erb -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Your App</title>
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+  <body>
+    <%= yield %>
+  </body>
+</html>
+```
+
+### 2. Create a Controller
+
+Specify which layout ElaineCrud should use with the `layout` directive:
 
 ```ruby
 class PeopleController < ElaineCrud::BaseController
-  layout 'application'  # Specify your app's layout
-  
+  layout 'application'  # Use your app's layout (wraps ElaineCrud's content)
+
   model Person
   permit_params :name, :email, :phone, :active
 end
 ```
 
-### 2. Add Routes
+**Important**: The `layout 'application'` line tells ElaineCrud to render its CRUD views inside your application's layout. Without this, you'll see unstyled content with no HTML structure.
+
+### 3. Add Routes
 
 ```ruby
 # config/routes.rb
 resources :people
 ```
 
-### 3. Configure TailwindCSS (Important!)
+### 4. Configure TailwindCSS (Important!)
 
 Add the gem's files to your `tailwind.config.js`. You need to include the gem's path in Tailwind's content scanning:
 
@@ -68,7 +101,7 @@ module.exports = {
 }
 ```
 
-### 4. Restart Your Server
+### 5. Restart Your Server
 
 ```bash
 rails server
