@@ -17,7 +17,7 @@
 
   <div class="overflow-x-auto">
     <%# Main grid container - grid template defined once here for entire table %>
-    <div class="bg-white shadow-md border border-gray-300 inline-block min-w-full grid" style="grid-template-columns: <%= grid_template %>;">
+    <div class="bg-white shadow-md border border-gray-300 inline-block min-w-full" style="display: grid; grid-template-columns: <%= grid_template %>;">
       <%# Header row - render all headers from layout %>
       <% header_layout.each do |header_config| %>
         <% if header_config[:field_name].to_s == 'ROW-ACTIONS' %>

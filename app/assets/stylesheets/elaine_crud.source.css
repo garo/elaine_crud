@@ -1,0 +1,6 @@
+/**
+ * ElaineCrud - Input file for Tailwind compilation
+ * This file is processed to generate vendor/assets/stylesheets/elaine_crud.css
+ */
+@import "tailwindcss";
+@config "../../../tailwind.config.js";

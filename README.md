@@ -76,9 +76,35 @@ end
 resources :people
 ```
 
-### 4. Configure TailwindCSS (Important!)
+### 4. Add Stylesheet (Choose One Approach)
 
-Add the gem's files to your `tailwind.config.js`. You need to include the gem's path in Tailwind's content scanning:
+ElaineCrud offers two ways to handle styling:
+
+#### Option A: Use Precompiled CSS (Easiest, Zero Config)
+
+Add the precompiled stylesheet to your layout:
+
+```erb
+<!-- app/views/layouts/application.html.erb -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Your App</title>
+    <%= stylesheet_link_tag "elaine_crud", "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+  </head>
+  <body>
+    <%= yield %>
+  </body>
+</html>
+```
+
+**Pros:** No Tailwind configuration needed, works immediately
+**Cons:** Cannot customize Tailwind theme
+
+#### Option B: Scan ElaineCrud Sources (For Customization)
+
+If you want to customize the Tailwind theme, add ElaineCrud's views to your `tailwind.config.js`:
 
 ```javascript
 const path = require('path')
@@ -97,9 +123,16 @@ module.exports = {
     path.join(gemPath, 'app/views/**/*.html.erb'),
     path.join(gemPath, 'app/helpers/**/*.rb')
   ],
-  // ... rest of your config
+  theme: {
+    extend: {
+      // Your custom theme here
+    },
+  },
 }
 ```
+
+**Pros:** Full theme customization
+**Cons:** Requires Tailwind CSS build setup
 
 ### 5. Restart Your Server
 

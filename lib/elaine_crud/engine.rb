@@ -12,6 +12,11 @@ module ElaineCrud
     config.autoload_paths << File.expand_path('../../app/helpers', __dir__)
     config.autoload_paths << File.expand_path('..', __dir__)
 
+    # Add vendor/assets to asset paths for precompiled CSS
+    initializer 'elaine_crud.assets' do |app|
+      app.config.assets.paths << File.expand_path('../../vendor/assets/stylesheets', __dir__) if app.config.respond_to?(:assets)
+    end
+
     # Ensure views are available in the view path
     initializer 'elaine_crud.append_view_paths' do |app|
       ActiveSupport.on_load :action_controller do
