@@ -30,6 +30,10 @@ module ElaineCrud
     protect_from_forgery with: :exception
     # No layout specified - host app controllers should set their own layout
 
+    # Run deferred auto-configuration on first request
+    # This defers database access until runtime, allowing asset precompilation without a database
+    before_action :ensure_auto_configuration
+
     # Handle record not found errors with custom 404 page
     rescue_from ActiveRecord::RecordNotFound, with: :record_not_found
 
@@ -206,6 +210,12 @@ module ElaineCrud
     end
 
     private
+
+    # Run deferred auto-configuration if needed
+    # This allows the controller to be loaded without database access during asset precompilation
+    def ensure_auto_configuration
+      self.class.run_deferred_auto_configuration
+    end
 
     # Check if the request is coming from a Turbo Frame
     def turbo_frame_request?

@@ -9,13 +9,17 @@ module ElaineCrud
     included do
       class_attribute :crud_model, :permitted_attributes, :column_configurations,
                       :field_configurations, :default_sort_column, :default_sort_direction,
-                      :disable_turbo_frames, :show_view_action_button, :max_export_records
+                      :disable_turbo_frames, :show_view_action_button, :max_export_records,
+                      :needs_auto_configuration
 
       # Default: View button is disabled
       self.show_view_action_button = false
 
       # Default: Max 10,000 records for export
       self.max_export_records = 10_000
+
+      # Default: No auto-configuration pending
+      self.needs_auto_configuration = false
     end
 
     class_methods do
@@ -23,16 +27,30 @@ module ElaineCrud
       # @param model_class [Class] The ActiveRecord model class
       def model(model_class)
         self.crud_model = model_class
+        # Mark that auto-configuration needs to run at request time
+        # This defers database access until runtime, avoiding issues during asset precompilation
+        self.needs_auto_configuration = true
+      end
+
+      # Run deferred auto-configuration (called at request time, not class load time)
+      # This allows asset precompilation to work without database access
+      def run_deferred_auto_configuration
+        return unless needs_auto_configuration
+        return unless crud_model
+
         # Auto-configure foreign key fields after setting the model
-        auto_configure_foreign_keys if model_class
+        auto_configure_foreign_keys
         # Auto-configure has_many relationships
-        auto_configure_has_many_relationships if model_class
+        auto_configure_has_many_relationships
         # Auto-configure has_one relationships
-        auto_configure_has_one_relationships if model_class
+        auto_configure_has_one_relationships
         # Auto-configure has_and_belongs_to_many relationships
-        auto_configure_habtm_relationships if model_class
+        auto_configure_habtm_relationships
         # Re-run permit_params to include foreign keys if it was called before model was set
         refresh_permitted_attributes
+
+        # Mark as configured so we don't run again
+        self.needs_auto_configuration = false
       end
 
       # Specify permitted parameters for strong params
