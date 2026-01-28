@@ -12,6 +12,11 @@ module ElaineCrud
     config.autoload_paths << File.expand_path('../../app/helpers', __dir__)
     config.autoload_paths << File.expand_path('..', __dir__)
 
+    # Register XLSX MIME type for Excel exports
+    initializer 'elaine_crud.mime_types', before: :load_config_initializers do
+      Mime::Type.register 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', :xlsx
+    end
+
     # Add vendor/assets to asset paths for precompiled CSS
     initializer 'elaine_crud.assets' do |app|
       app.config.assets.paths << File.expand_path('../../vendor/assets/stylesheets', __dir__) if app.config.respond_to?(:assets)
