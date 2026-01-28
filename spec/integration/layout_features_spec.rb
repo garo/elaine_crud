@@ -42,26 +42,26 @@ RSpec.describe 'Custom Layout Features', type: :feature do
       # Check that page rendered without errors
       expect_no_errors
 
-      # Verify grid is being used (grid class on container)
-      expect(page).to have_selector('div.grid')
+      # Verify grid is being used (inline style for Tailwind-independence)
+      expect(page).to have_selector('div[style*="display: grid"]')
     end
 
     it 'uses flexible grid columns for books' do
       visit '/books'
       expect_no_errors
-      expect(page).to have_selector('div.grid')
+      expect(page).to have_selector('div[style*="display: grid"]')
     end
 
     it 'uses flexible grid columns for members' do
       visit '/members'
       expect_no_errors
-      expect(page).to have_selector('div.grid')
+      expect(page).to have_selector('div[style*="display: grid"]')
     end
 
     it 'uses flexible grid columns for librarians' do
       visit '/librarians'
       expect_no_errors
-      expect(page).to have_selector('div.grid')
+      expect(page).to have_selector('div[style*="display: grid"]')
     end
   end
 
