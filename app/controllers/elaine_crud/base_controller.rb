@@ -164,7 +164,8 @@ module ElaineCrud
         # For Turbo Frame requests, return the view row partial
         if turbo_frame_request?
           # Use bg-white for consistency when returning from edit (alternating colors handled by full page refresh)
-          render partial: 'elaine_crud/base/view_row', locals: { record: @record, columns: @columns, row_bg_class: 'bg-white', is_last_record: false }
+          # Pass just_saved: true to trigger highlight animation
+          render partial: 'elaine_crud/base/view_row', locals: { record: @record, columns: @columns, row_bg_class: 'bg-white', is_last_record: false, just_saved: true }
         else
           redirect_to polymorphic_path(@record), notice: "#{crud_model.name} was successfully updated.", status: :see_other
         end
