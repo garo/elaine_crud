@@ -108,16 +108,16 @@ bin/dev
 
 ### Basic Controller
 
-The minimal controller setup:
-
 ```ruby
-class ArticlesController < ElaineCrud::BaseController
-  layout 'application'  # Host app controls layout (header/footer/styling)
-  
-  model Article
-  permit_params :title, :content, :published
+class TasksController < ElaineCrud::BaseController
+  layout 'application'
+
+  model Task
+  permit_params :title, :description, :priority, :completed, :due_date
 end
 ```
+
+That's it - 6 lines of code for a full CRUD interface with search, sorting, pagination, and export.
 
 ### DSL Reference
 
@@ -129,53 +129,6 @@ end
 - `show_view_button(enabled)` - Show/hide the View button in actions column
 - `max_export(limit)` - Set maximum records for export (default: 10,000)
 
-### Customization
-
-#### Override Views
-
-Create views in your app with the same names to override engine views:
-
-```
-app/views/articles/index.html.erb  # Overrides engine's index view
-```
-
-#### Override Controller Methods
-
-```ruby
-class ArticlesController < ElaineCrud::BaseController
-  model Article
-  permit_params :title, :content, :published
-  
-  private
-  
-  # Custom record fetching with scoping
-  def fetch_records
-    Article.published.order(:title)
-  end
-  
-  # Custom column selection
-  def determine_columns
-    %w[title published created_at]
-  end
-end
-```
-
-#### Custom Helpers
-
-Override the display helper in your application:
-
-```ruby
-# app/helpers/application_helper.rb
-def display_column_value(record, column)
-  case column
-  when 'published'
-    record.published? ? '📘 Published' : '📝 Draft'
-  else
-    super # Call the engine's helper
-  end
-end
-```
-
 ## Requirements
 
 - Rails 7.0+
@@ -183,27 +136,61 @@ end
 
 ## Examples
 
-### Complete Example: Managing Blog Posts
+### More detailed example with customisations
+
+A more comprehensive example showing custom field formatting, sorting, and relationships:
 
 ```ruby
-# app/controllers/posts_controller.rb
-class PostsController < ElaineCrud::BaseController
-  layout 'application'  # Use your app's layout
-  
-  model Post
-  permit_params :title, :content, :published, :category_id
-  
-  private
-  
-  def fetch_records
-    Post.includes(:category).order(created_at: :desc)
+# app/controllers/products_controller.rb
+class ProductsController < ElaineCrud::BaseController
+  layout 'application'
+
+  model Product
+  permit_params :name, :description, :price, :stock_quantity, :category_id, :active
+
+  # Sort by name alphabetically by default
+  default_sort column: :name, direction: :asc
+
+  # Show the View button in actions column
+  show_view_button
+
+  # Format price as currency
+  field :price do |f|
+    f.title "Price"
+    f.display_as { |value, record| number_to_currency(value) if value.present? }
+  end
+
+  # Custom display for stock status
+  field :stock_quantity do |f|
+    f.title "Stock"
+    f.display_as { |value, record|
+      if value.to_i > 10
+        content_tag(:span, "#{value} in stock", class: "text-green-600")
+      elsif value.to_i > 0
+        content_tag(:span, "Low: #{value}", class: "text-yellow-600 font-semibold")
+      else
+        content_tag(:span, "Out of stock", class: "text-red-600 font-semibold")
+      end
+    }
+  end
+
+  # Boolean with badge display
+  field :active do |f|
+    f.title "Status"
+    f.display_as { |value, record|
+      if value
+        content_tag(:span, "Active", class: "px-2 py-1 text-xs rounded bg-green-100 text-green-800")
+      else
+        content_tag(:span, "Inactive", class: "px-2 py-1 text-xs rounded bg-gray-100 text-gray-600")
+      end
+    }
+  end
+
+  # Foreign key - automatically renders as dropdown in forms
+  field :category_id do |f|
+    f.foreign_key model: Category, display: :name
   end
 end
-
-# config/routes.rb
-resources :posts
-
-# Navigate to /posts for instant CRUD interface
 ```
 
 ### Example Output
@@ -220,6 +207,22 @@ The generated interface includes:
 - **Empty States**: Helpful messages when no records exist
 - **Visual Feedback**: Row highlights after saving changes
 
+### Example Controllers Reference
+
+The `test/dummy_app` contains example controllers demonstrating various features:
+
+| Controller | Features Demonstrated |
+|------------|----------------------|
+| **LibrariesController** | `has_many` relationships (auto-detected), email as mailto link, date formatting |
+| **AuthorsController** | Boolean field with badge display, `has_many` relationship display, `show_view_button` |
+| **MembersController** | Enum-style field with colored badges, email links, date formatting |
+| **LibrariansController** | Role badges, salary as currency, email links |
+| **LoansController** | Multiple `foreign_key` fields, date sorting, status display |
+| **TagsController** | Color preview display, simple CRUD |
+| **BookCopiesController** | Minimal controller (just `model` and `permit_params`) |
+| **ProfilesController** | Minimal controller example |
+| **BooksController** | `field` with `display_as`, `foreign_key`, `nested_create`, currency formatting, custom `calculate_layout` for multi-row display, URL links |
+
 ## Architecture
 
 ElaineCrud follows a **separation of concerns** approach:
@@ -234,10 +237,7 @@ The gem doesn't impose any layout - your app controls the HTML structure:
 ```ruby
 class UsersController < ElaineCrud::BaseController
   layout 'admin'        # Use admin layout
-  # or layout 'public'  # Use public layout
-
-  model User
-  permit_params :name, :email
+  ...
 end
 ```
 
