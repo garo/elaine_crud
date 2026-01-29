@@ -2,13 +2,20 @@
 
 A Rails engine for rapidly generating CRUD interfaces for ActiveRecord models with minimal configuration.
 
+![Image](docs/screenshots/screenshot1.png)
+
 ## Features
 
-- ✅ **Zero Configuration**: Works out of the box with any ActiveRecord model
-- ✅ **Minimal Code**: Just specify model and permitted params
-- ✅ **Modern UI**: Clean, responsive interface with TailwindCSS
-- ✅ **Extensible**: Override any view or behavior in your host app
-- ✅ **Rails Conventions**: Follows standard Rails patterns
+- **Zero Configuration**: Works out of the box with any ActiveRecord model
+- **Rails Conventions**: Follows standard Rails patterns
+- **Minimal Code**: Just specify model and permitted params
+- **Search & Filter**: Built-in search across text fields
+- **Sortable Columns**: Click column headers to sort
+- **Pagination**: Automatic pagination with configurable page size
+- **Export**: Download data as CSV, Excel, or JSON
+- **Extensible**: Override any view or behavior in your host app
+- **Modern UI**: Clean, responsive interface with TailwindCSS
+- **Inline Editing**: Edit records in place with Turbo Frames
 
 ## Installation
 
@@ -25,7 +32,39 @@ bundle install
 
 ## Quick Start
 
-### 1. Ensure Your Application Has a Layout
+### 1. Ensure you have ActiveRecord model representing your data.
+
+```bash
+bin/rails generate model Task title:string description:text priority:integer completed:boolean due_date:date
+bin/rails db:migrate
+```
+
+### 2. Create a Controller for your ActiveRecord Model
+
+Specify which layout ElaineCrud should use with the `layout` directive:
+
+```ruby
+class TaskController < ElaineCrud::BaseController
+  layout 'application'  # Use your app's layout (wraps ElaineCrud's content)
+
+  model Task
+  permit_params :title, :description, :priority, :completed, :due_date
+end
+```
+**Important**: The `layout 'application'` line tells ElaineCrud to render its CRUD views inside your application's layout. Without this, you'll see unstyled content with no HTML structure.
+
+
+### 3. Add Routes
+
+```ruby
+# config/routes.rb
+Rails.application.routes.draw do
+  resources :tasks
+  root "tasks#index"
+end
+```
+
+### 4. Ensure Your Application Has a Layout
 
 ElaineCrud is a **content-only engine** - it provides CRUD views but relies on your application to provide the HTML structure (layout, navigation, styling).
 
@@ -35,112 +74,35 @@ Your Rails app should have a layout file (typically `app/views/layouts/applicati
 - JavaScript imports (including Turbo)
 - Navigation/header/footer (optional, your choice)
 
-Most Rails apps with TailwindCSS already have this. If not, ensure you have:
+Here's an example layout file, which contains the critical stylesheet_link_tag for elaine_crud:
 
 ```erb
-<!-- app/views/layouts/application.html.erb -->
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Your App</title>
+    <title><%= content_for(:title) || "Taskmanager" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
-    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+
+    <%= stylesheet_link_tag "elaine_crud", "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
   </head>
-  <body>
-    <%= yield %>
+
+  <body class="bg-gray-100">
+    <main class="w-full px-4 py-6">
+      <%= yield %>
+    </main>
   </body>
 </html>
 ```
 
-### 2. Create a Controller
-
-Specify which layout ElaineCrud should use with the `layout` directive:
-
-```ruby
-class PeopleController < ElaineCrud::BaseController
-  layout 'application'  # Use your app's layout (wraps ElaineCrud's content)
-
-  model Person
-  permit_params :name, :email, :phone, :active
-end
-```
-
-**Important**: The `layout 'application'` line tells ElaineCrud to render its CRUD views inside your application's layout. Without this, you'll see unstyled content with no HTML structure.
-
-### 3. Add Routes
-
-```ruby
-# config/routes.rb
-resources :people
-```
-
-### 4. Add Stylesheet (Choose One Approach)
-
-ElaineCrud offers two ways to handle styling:
-
-#### Option A: Use Precompiled CSS (Easiest, Zero Config)
-
-Add the precompiled stylesheet to your layout:
-
-```erb
-<!-- app/views/layouts/application.html.erb -->
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Your App</title>
-    <%= stylesheet_link_tag "elaine_crud", "data-turbo-track": "reload" %>
-    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
-  </head>
-  <body>
-    <%= yield %>
-  </body>
-</html>
-```
-
-**Pros:** No Tailwind configuration needed, works immediately
-**Cons:** Cannot customize Tailwind theme
-
-#### Option B: Scan ElaineCrud Sources (For Customization)
-
-If you want to customize the Tailwind theme, add ElaineCrud's views to your `tailwind.config.js`:
-
-```javascript
-const path = require('path')
-const execSync = require('child_process').execSync
-
-// Get the gem path from bundler
-const gemPath = execSync('bundle show elaine_crud', { encoding: 'utf-8' }).trim()
-
-module.exports = {
-  content: [
-    './app/views/**/*.html.erb',
-    './app/helpers/**/*.rb',
-    './app/assets/stylesheets/**/*.css',
-    './app/javascript/**/*.js',
-    // Add ElaineCrud gem views and helpers
-    path.join(gemPath, 'app/views/**/*.html.erb'),
-    path.join(gemPath, 'app/helpers/**/*.rb')
-  ],
-  theme: {
-    extend: {
-      // Your custom theme here
-    },
-  },
-}
-```
-
-**Pros:** Full theme customization
-**Cons:** Requires Tailwind CSS build setup
-
-### 5. Restart Your Server
+### 5. Start Your Server
 
 ```bash
-rails server
+bin/dev
 ```
-
-Navigate to `/people` and you'll have a fully functional CRUD interface!
 
 ## Usage
 
@@ -161,7 +123,11 @@ end
 
 - `model(ModelClass)` - Specify the ActiveRecord model to manage
 - `permit_params(*attrs)` - Define permitted attributes for strong parameters
-- `columns(config)` - (Future) Configure column display options
+- `field(field_name, **options)` - Configure individual field display and behavior
+- `default_sort(column:, direction:)` - Set default sort column and direction (:asc or :desc)
+- `disable_turbo` - Disable Turbo Frames (use full-page navigation instead of inline editing)
+- `show_view_button(enabled)` - Show/hide the View button in actions column
+- `max_export(limit)` - Set maximum records for export (default: 10,000)
 
 ### Customization
 
@@ -212,8 +178,8 @@ end
 
 ## Requirements
 
-- Rails 6.0+
-- TailwindCSS (for styling)
+- Rails 7.0+
+- TailwindCSS (included via precompiled CSS)
 
 ## Examples
 
@@ -243,11 +209,16 @@ resources :posts
 ### Example Output
 
 The generated interface includes:
-- **Index Page**: Responsive table with all records
-- **Smart Formatting**: Dates, booleans, and nil values formatted nicely
+- **Index Page**: Responsive grid-based table with all records
+- **Inline Editing**: Click Edit to modify records in place (Turbo Frames)
+- **Sortable Columns**: Click headers to sort ascending/descending
+- **Search**: Filter records by text across searchable columns
+- **Pagination**: Navigate through large datasets with configurable page size
+- **Export**: Download as CSV, Excel (.xlsx), or JSON
+- **Smart Formatting**: Dates, booleans, currencies, and nil values formatted nicely
 - **Action Buttons**: Edit and Delete functionality
 - **Empty States**: Helpful messages when no records exist
-- **Modern Styling**: Clean TailwindCSS design
+- **Visual Feedback**: Row highlights after saving changes
 
 ## Architecture
 
@@ -272,9 +243,9 @@ end
 ```
 
 This means:
-- ✅ **Your app controls**: Headers, footers, navigation, CSS frameworks
-- ✅ **Engine provides**: Table content, buttons, data formatting
-- ✅ **Zero view files needed**: No templates to create in your app
+- **Your app controls**: Headers, footers, navigation, CSS frameworks
+- **Engine provides**: Table content, buttons, data formatting
+- **Zero view files needed**: No templates to create in your app
 
 See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed technical documentation.
 
