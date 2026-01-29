@@ -215,7 +215,7 @@ The generated interface includes:
 - **Search**: Filter records by text across searchable columns
 - **Pagination**: Navigate through large datasets with configurable page size
 - **Export**: Download as CSV, Excel (.xlsx), or JSON
-- **Smart Formatting**: Dates, booleans, currencies, and nil values formatted nicely
+- **Smart Formatting**: Dates, booleans, and nil values formatted nicely
 - **Action Buttons**: Edit and Delete functionality
 - **Empty States**: Helpful messages when no records exist
 - **Visual Feedback**: Row highlights after saving changes
@@ -235,8 +235,7 @@ The gem doesn't impose any layout - your app controls the HTML structure:
 class UsersController < ElaineCrud::BaseController
   layout 'admin'        # Use admin layout
   # or layout 'public'  # Use public layout
-  # or layout false     # No layout (API mode)
-  
+
   model User
   permit_params :name, :email
 end
@@ -251,11 +250,12 @@ See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed technical documentation
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
+1. Open a new issue and suggest a feature
+2. Fork the repository
+3. Create a feature branch
+4. Make your changes
+5. Add tests
+6. Submit a pull request
 
 ## License
 
