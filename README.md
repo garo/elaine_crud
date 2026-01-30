@@ -233,7 +233,7 @@ When you set model Task in your controller, ElaineCrud automatically detect all 
 and configures the fields accordingly. This will result a dropdown menu to select the belongs_to target, like this:
 ![Image](docs/screenshots/employees.png)
 
-Also the Departments controller will have a back reference to show how many Employees are boudn to the Department.
+Also the Departments controller will have a back reference to show how many Employees are bound to the Department.
 ![Image](docs/screenshots/departments.png)
 
 You can customise the way how the foreign key behaves with the `foreign_key` configuration command. You can replicate the
@@ -306,11 +306,6 @@ class EmployeesController < ElaineCrud::BaseController
 end
 ```
 
-## Requirements
-
-- Rails 7.0+
-- TailwindCSS (included via precompiled CSS)
-
 ## Examples
 
 ### More detailed example with customisations
@@ -370,19 +365,9 @@ class ProductsController < ElaineCrud::BaseController
 end
 ```
 
-### Example Output
+## Requirements
 
-The generated interface includes:
-- **Index Page**: Responsive grid-based table with all records
-- **Inline Editing**: Click Edit to modify records in place (Turbo Frames)
-- **Sortable Columns**: Click headers to sort ascending/descending
-- **Search**: Filter records by text across searchable columns
-- **Pagination**: Navigate through large datasets with configurable page size
-- **Export**: Download as CSV, Excel (.xlsx), or JSON
-- **Smart Formatting**: Dates, booleans, and nil values formatted nicely
-- **Action Buttons**: Edit and Delete functionality
-- **Empty States**: Helpful messages when no records exist
-- **Visual Feedback**: Row highlights after saving changes
+- Rails 7.0+
 
 ## Architecture
 
