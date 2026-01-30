@@ -129,38 +129,38 @@ class TaskController < ElaineCrud::BaseController
   permit_params :title, :description, :priority, :completed, :due_date
 
   # Configures the ActiveRecord field :title
-  field :title do |f|
+  field :title do
 
     # Human readable name for the field, shown in the column header.
-    f.title "Task title"
+    title "Task title"
 
     # Description is shown in the edit form
-    f.description "Write a short title for your task, so that it's easily understandable"
+    description "Write a short title for your task, so that it's easily understandable"
 
     # Custom rendering. `value` is the raw value of the field and `record` is the entire ActiveRecord
-    f.display_as { |value, record| "<b>#{value}</b>" if value.present? }
+    display_as { |value, record| "<b>#{value}</b>" if value.present? }
 
     # By default text columns are searchable but not filterable. You can set a field to be filterable
     # so that it shows in Advanced Filters section, but then it's no longer searchable
-    f.filterable true
+    filterable true
 
     # By default text columns are searchable and other columns are not
-    f.searchable false
+    searchable false
   end
 
-  field :priority do |f|
+  field :priority do
     # Gives a html dropdown for available options
-    f.options [1,2,3,4,5]
+    options [1,2,3,4,5]
   end
 
   # `read_only` can be used prevent field from being edited
-  field :modified_at do |f|
-    f.read_only true
+  field :modified_at do
+    read_only true
   end
 
   # We can also hide a field completely
-  field :created_at do |f|
-    f.hidden true
+  field :created_at do
+    hidden true
   end
 
 end
@@ -178,9 +178,9 @@ class OrderController < ElaineCrud::BaseController
   permit_params :product, :amount, :price_per_unit
 
   # The field `total_cost` simply does not exists in the ActiveRecord model
-  field :total_cost do |f|
-    f.readonly true
-    f.display_as { |value,record|
+  field :total_cost do
+    readonly true
+    display_as { |value,record|
       # The `value` parameter will be nil as it does not exists.
       record.amount * record.price_per_unit
     }
@@ -268,7 +268,7 @@ end
 
 ### More detailed example with customisations
 
-A more comprehensive example showing custom field formatting, sorting, and relationships:
+A more comprehensive example showing custom field formatting, sorting, and relationships. This example uses the more verbose block syntax with fields. Both approaches work and are valid.
 
 ```ruby
 # app/controllers/products_controller.rb
