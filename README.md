@@ -14,8 +14,6 @@ A Rails engine for rapidly generating CRUD interfaces for ActiveRecord models wi
 - **Pagination**: Automatic pagination with configurable page size
 - **Export**: Download data as CSV, Excel, or JSON
 - **Extensible**: Override any view or behavior in your host app
-- **Modern UI**: Clean, responsive interface with TailwindCSS
-- **Inline Editing**: Edit records in place with Turbo Frames
 
 ## Installation
 
@@ -41,7 +39,11 @@ bin/rails db:migrate
 
 ### 2. Create a Controller for your ActiveRecord Model
 
-Specify which layout ElaineCrud should use with the `layout` directive:
+This controller handles one ActiveRecord model and presents a CRUD interface to the user. It derives from the ElaineCrud::BaseController, which provides good defaults for how the CRUD view should operate. The controller requires a working layout (see step 4).
+
+The main configuration is setting the ActiveRecord model using the `model Task` keyword, where Task is an ActiveRecord model. You also need to explicitly specify which model fields are permitted using the `permit_params` command.
+
+The following example controller provides a fully working CRUD view for the ActiveRecord with pagination, sorting, filtering and exporting. You can customise the behaviour, which is explained in more details later.
 
 ```ruby
 class TaskController < ElaineCrud::BaseController
@@ -51,10 +53,10 @@ class TaskController < ElaineCrud::BaseController
   permit_params :title, :description, :priority, :completed, :due_date
 end
 ```
-**Important**: The `layout 'application'` line tells ElaineCrud to render its CRUD views inside your application's layout. Without this, you'll see unstyled content with no HTML structure.
-
 
 ### 3. Add Routes
+
+You need to add the created Controller to the Rails routes.rb. In this example you simply declare `resources :tasks` where `:tasks` maps to the TaskController.
 
 ```ruby
 # config/routes.rb
@@ -106,28 +108,149 @@ bin/dev
 
 ## Usage
 
-### Basic Controller
+### Extending the default Controller
+
+As described earlier, this example controller uses a lot of default from the `ElaineCrud::BaseController`.
+
+One of the first things user usually wants to customise is how a certain ActiveRecord property is rendered to the user.
 
 ```ruby
-class TasksController < ElaineCrud::BaseController
-  layout 'application'
+class TaskController < ElaineCrud::BaseController
+  layout 'application'  # Use your app's layout (wraps ElaineCrud's content)
 
   model Task
   permit_params :title, :description, :priority, :completed, :due_date
+
+  # Configures the ActiveRecord field :title
+  field :title do |f|
+
+    # Human readable name for the field, shown in the column header.
+    f.title "Task title"
+
+    # Description is shown in the edit form
+    f.description "Write a short title for your task, so that it's easily understandable"
+
+    # Custom rendering. `value` is the raw value of the field and `record` is the entire ActiveRecord
+    f.display_as { |value, record| "<b>#{value}</b>" if value.present? }
+
+    # By default text columns are searchable but not filterable. You can set a field to be filterable
+    # so that it shows in Advanced Filters section, but then it's no longer searchable
+    f.filterable true
+
+    # By default text columns are searchable and other columns are not
+    f.searchable false
+  end
+
+  field :priority do |f|
+    # Gives a html dropdown for available options
+    f.options [1,2,3,4,5]
+  end
+
+  # `read_only` can be used prevent field from being edited
+  field :modified_at do |f|
+    f.read_only true
+  end
+
+  # We can also hide a field completely
+  field :created_at do |f|
+    f.hidden true
+  end
+
 end
 ```
 
-That's it - 6 lines of code for a full CRUD interface with search, sorting, pagination, and export.
+### Virtual fields
 
-### DSL Reference
+It is possible to create a virtual column which is not backed by any actual field in the ActiveRecord, but instead its contents is calculated based on other fields. For example if your Order has `amount` and `price_per_unit` fields, you could have a `total_cost` virtual field:
 
-- `model(ModelClass)` - Specify the ActiveRecord model to manage
-- `permit_params(*attrs)` - Define permitted attributes for strong parameters
-- `field(field_name, **options)` - Configure individual field display and behavior
-- `default_sort(column:, direction:)` - Set default sort column and direction (:asc or :desc)
-- `disable_turbo` - Disable Turbo Frames (use full-page navigation instead of inline editing)
-- `show_view_button(enabled)` - Show/hide the View button in actions column
-- `max_export(limit)` - Set maximum records for export (default: 10,000)
+```ruby
+class OrderController < ElaineCrud::BaseController
+  layout 'application'  # Use your app's layout (wraps ElaineCrud's content)
+
+  model Order
+  permit_params :product, :amount, :price_per_unit
+
+  # The field `total_cost` simply does not exists in the ActiveRecord model
+  field :total_cost do |f|
+    f.readonly true
+    f.display_as { |value,record|
+      # The `value` parameter will be nil as it does not exists.
+      record.amount * record.price_per_unit
+    }
+  end
+end
+```
+
+### Relations
+
+ElaineCrud supports ActiveRecord relations automatically, if they are configured in the underlying ActiveRecords. Lets assume these models:
+```
+bin/rails generate model Department name:string
+bin/rails generate model Employee name:string email:string department:references
+bin/rails db:migrate
+
+# app/models/department.rb
+class Department < ApplicationRecord
+  has_many :employees
+end
+
+# app/models/employee.rb
+class Employee < ApplicationRecord
+  belongs_to :department
+end
+```
+
+We can then have a simple EmployeesController and DepartmentsController
+```ruby
+# app/controllers/employees_controller.rb
+class EmployeesController < ElaineCrud::BaseController
+  layout 'application'
+
+  model Employee
+  permit_params :name, :email, :department_id
+end
+
+# app/controllers/departments_controller.rb
+class DepartmentsController < ElaineCrud::BaseController
+  layout 'application'
+
+  model Department
+  permit_params :name
+
+end
+```
+
+This will automatically create a relation to the Departments in the EmployeesController field like this:
+![Image](docs/screenshots/employees.png)
+
+Also the Departments controller will have a back reference to show how many Employees are boudn to the Department.
+![Image](docs/screenshots/departments.png)
+
+
+### Misc options
+```ruby
+# app/controllers/employees_controller.rb
+class EmployeesController < ElaineCrud::BaseController
+  layout 'application'
+
+  model Employee
+  permit_params :name, :email, :department_id
+
+  # Sets default sorting when the controller is opened
+  default_sort column: :email, direction: :asc
+
+  # Instead of editing a row in the inline editor using turbo, the Edit button
+  # opens /controller/#{id}/edit page
+  disable_turbo
+
+  # This adds a View button next to Edit and Delete buttons, which links to
+  # /controller/#{id}
+  show_view_button
+
+  # Limit how many rows the export functionality will be exporting. The default is 10000
+  max_export(5000)
+end
+```
 
 ## Requirements
 
@@ -207,44 +330,7 @@ The generated interface includes:
 - **Empty States**: Helpful messages when no records exist
 - **Visual Feedback**: Row highlights after saving changes
 
-### Example Controllers Reference
-
-The `test/dummy_app` contains example controllers demonstrating various features:
-
-| Controller | Features Demonstrated |
-|------------|----------------------|
-| **LibrariesController** | `has_many` relationships (auto-detected), email as mailto link, date formatting |
-| **AuthorsController** | Boolean field with badge display, `has_many` relationship display, `show_view_button` |
-| **MembersController** | Enum-style field with colored badges, email links, date formatting |
-| **LibrariansController** | Role badges, salary as currency, email links |
-| **LoansController** | Multiple `foreign_key` fields, date sorting, status display |
-| **TagsController** | Color preview display, simple CRUD |
-| **BookCopiesController** | Minimal controller (just `model` and `permit_params`) |
-| **ProfilesController** | Minimal controller example |
-| **BooksController** | `field` with `display_as`, `foreign_key`, `nested_create`, currency formatting, custom `calculate_layout` for multi-row display, URL links |
-
 ## Architecture
-
-ElaineCrud follows a **separation of concerns** approach:
-
-- **Engine provides**: CRUD logic, data formatting, content templates
-- **Host app provides**: Layout, styling, HTML structure, navigation
-
-### Layout Control
-
-The gem doesn't impose any layout - your app controls the HTML structure:
-
-```ruby
-class UsersController < ElaineCrud::BaseController
-  layout 'admin'        # Use admin layout
-  ...
-end
-```
-
-This means:
-- **Your app controls**: Headers, footers, navigation, CSS frameworks
-- **Engine provides**: Table content, buttons, data formatting
-- **Zero view files needed**: No templates to create in your app
 
 See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed technical documentation.
 
