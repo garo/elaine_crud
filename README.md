@@ -1,7 +1,14 @@
 # ElaineCrud
 
-A Rails engine for rapidly generating CRUD interfaces for ActiveRecord models with minimal configuration.
+A Rails engine for rapidly generating CRUD interfaces for ActiveRecord models with minimal configuration. This controller will create you the following CRUD interface:
+```ruby
+class TaskController < ElaineCrud::BaseController
+  layout 'application'
 
+  model Task # Your ActiveRecord model
+  permit_params :title, :description, :priority, :completed, :due_date
+end
+```
 ![Image](docs/screenshots/screenshot1.png)
 
 ## Features
