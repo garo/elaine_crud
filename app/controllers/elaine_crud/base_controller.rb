@@ -133,9 +133,9 @@ module ElaineCrud
       @filterable_columns = determine_filterable_columns
       @total_count = total_unfiltered_count if search_active?
 
-      # If Turbo is disabled, always render the full edit page
+      # If Turbo is disabled, render standalone edit form (no table context)
       if turbo_disabled?
-        render 'elaine_crud/base/edit'
+        render 'elaine_crud/base/edit_standalone'
       elsif turbo_frame_request?
         # For Turbo Frame requests, return just the edit row partial
         render partial: 'elaine_crud/base/edit_row', locals: { record: @record, columns: @columns }
