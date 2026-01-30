@@ -103,6 +103,9 @@ Here's an example layout file, which contains the critical stylesheet_link_tag f
     <main class="w-full px-4 py-6">
       <%= yield %>
     </main>
+
+    <%# Modal container for nested record creation %>
+    <%= render 'elaine_crud/base/modal' %>
   </body>
 </html>
 ```
@@ -226,13 +229,57 @@ class DepartmentsController < ElaineCrud::BaseController
 
 end
 ```
-
-This will automatically create a relation to the Departments in the EmployeesController field like this:
+When you set model Task in your controller, ElaineCrud automatically detect all belongs_to relationships on the model
+and configures the fields accordingly. This will result a dropdown menu to select the belongs_to target, like this:
 ![Image](docs/screenshots/employees.png)
 
 Also the Departments controller will have a back reference to show how many Employees are boudn to the Department.
 ![Image](docs/screenshots/departments.png)
 
+You can customise the way how the foreign key behaves with the `foreign_key` configuration command. You can replicate the
+default behavious by setting `model` parameter to the ActiveRecord to which the relation belongs to and setting `display` to the name
+of the field in the belongs_to model which should be displayed to the user.
+```ruby
+  field :department_id do
+    foreign_key model: Department, display: :name
+  end
+```
+
+You can customise the rendering:
+```ruby
+  field :department_id do
+    foreign_key model: Department, display: ->(record) { "#{record.name} (#{record.id})" }
+  end
+```
+
+You can also limit which entries are shown in the dropdown using the `scope` filtering tool:
+```ruby
+  field :department_id do
+    foreign_key(
+      model: Department,
+      display: :name,
+      scope: -> { Department.where(active: true).order(:name) }
+    )
+  end
+```
+
+By default, you need to have the Department created in advance before creating a new Employee.
+To make this easier you can also enable nested object creation. For this you would use the `nested_create` and `foreign_key` properties.
+
+```ruby
+class EmployeesController < ElaineCrud::BaseController
+  layout 'application'
+
+  model Employee
+  permit_params :name, :email, :department_id
+
+  field :department_id do
+    foreign_key model: Department, display: :name
+    nested_create true
+  end
+end
+```
+For this to work you need to have the modal container in your layout (`<%= render 'elaine_crud/base/modal' %>`), just before the closing body tag. We already had this in the layout example above.
 
 ### Misc options
 ```ruby
